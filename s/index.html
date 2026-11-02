@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Spotogo</title>
 <meta name="description" content="A restaurant shared with you on Spotogo." />
-<meta name="theme-color" content="#FFFFFF" />
+<meta name="theme-color" content="#FCFAF6" />
 <!-- Link previews (WhatsApp, Telegram…). For short links (/s/<id>) the site Worker
      (site/src/index.js) fills in the spot's name and address. -->
 <meta property="og:type" content="website" />
@@ -20,7 +20,7 @@
 <link rel="icon" href="../icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
 <!--
   Spotogo share landing page. The spot is a base64url JSON payload (format v1, same as
   src/lib/spot-codec.ts): short links /s/<id> get it from the site Worker (window.FS_PAYLOAD),
@@ -30,9 +30,9 @@
 -->
 <style>
   :root {
-    /* Wine & Olive palette (same as the app). Light only. */
-    --bg: #FFFFFF; --card: #FFFFFF; --text: #121212; --muted: #555555; --faint: #8C8C8C;
-    --border: #E6E6E6; --accent: #7B1E3D; --accent-soft: #FFFFFF; --on-accent: #FFFFFF; --olive: #3E8E22;
+    /* Mint palette (same as the app's light theme). Light only. */
+    --bg: #FCFAF6; --card: #FFFFFF; --text: #202120; --muted: #5E6360; --faint: #8A908C;
+    --border: #E3DED4; --accent: #48B88C; --accent-soft: #E4F4EC; --on-accent: #10291F; --link: #2F9E74;
     color-scheme: light;
   }
   * { box-sizing: border-box; }
@@ -45,13 +45,12 @@
   }
   main { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 20px; }
   .brand { display: flex; align-items: center; gap: 10px; }
-  .brand img { width: 40px; height: 40px; border-radius: 12px; }
-  .wordmark { font-family: Fraunces, Georgia, serif; font-size: 24px; font-weight: 600; letter-spacing: -0.3px; }
-  .wordmark span { color: var(--accent); }
-  .tagline { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--faint); margin-top: 2px; }
+  .logo-text { display: flex; flex-direction: column; align-items: flex-start; }
+  .logo { height: 36px; width: auto; display: block; }
+  .tagline { font-size: 10.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 22px; }
   .label { font-size: 11px; font-weight: 700; letter-spacing: 1.3px; text-transform: uppercase; color: var(--faint); }
-  h1 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 32px; line-height: 1.12; letter-spacing: -0.5px; margin: 6px 0 8px; overflow-wrap: anywhere; }
+  h1 { font-weight: 800; font-size: 30px; line-height: 1.12; letter-spacing: -0.5px; margin: 6px 0 8px; overflow-wrap: anywhere; }
   .address { color: var(--muted); font-size: 15px; line-height: 1.5; margin: 0; }
   .creator { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
   .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-weight: 700; flex: none; }
@@ -65,8 +64,8 @@
   .download { text-align: center; }
   .download p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 8px 0 0; }
   .download .older { font-size: 12.5px; color: var(--faint); margin-top: 14px; }
-  .download .older a { color: var(--accent); font-weight: 600; text-decoration: none; }
-  .download h2 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 22px; margin: 0 0 6px; }
+  .download .older a { color: var(--link); font-weight: 600; text-decoration: none; }
+  .download h2 { font-weight: 800; font-size: 22px; margin: 0 0 6px; }
   .links a { color: inherit; }
   .note { color: var(--faint); font-size: 12.5px; text-align: center; margin: 0; }
   .hidden { display: none !important; }
@@ -75,9 +74,7 @@
 <body>
 <main>
   <div class="brand">
-    <img src="../icon.png" alt="" />
-    <div class="wordmark">Spoto<span>Go</span></div>
-    <div class="tagline">Find it. Pin it. Go.</div>
+    <div class="logo-text"><img class="logo" src="../logo.png" alt="Spotogo" /><div class="tagline">Find it. Pin it. Go.</div></div>
   </div>
 
   <section class="card" id="spot">

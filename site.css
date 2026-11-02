@@ -1,8 +1,8 @@
 /* Shared styles for Spotogo's static pages (privacy, terms, delete-data). */
 :root {
-  /* Crisp white Wine & Olive (same as the app): white surfaces, near-black text, no pastel fills. Light only. */
-  --bg: #FFFFFF; --card: #FFFFFF; --text: #121212; --muted: #555555; --faint: #8C8C8C;
-  --border: #E6E6E6; --accent: #7B1E3D; --accent-soft: #FFFFFF; --olive: #3E8E22;
+  /* Mint (same as the app's light theme, 2026-11-02): warm off-white, white cards, mint brand colour. Light only. */
+  --bg: #FCFAF6; --card: #FFFFFF; --text: #202120; --muted: #5E6360; --faint: #8A908C;
+  --border: #E3DED4; --accent: #2F9E74; --mint: #48B88C; --on-mint: #10291F; --accent-soft: #E4F4EC; --dark-green: #183C30;
   color-scheme: light;
 }
 * { box-sizing: border-box; }
@@ -14,14 +14,12 @@ body {
 main { max-width: 720px; margin: 0 auto; }
 a { color: var(--accent); }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); margin-bottom: 28px; }
-.brand img { width: 36px; height: 36px; border-radius: 10px; }
-.wordmark { font-family: Fraunces, Georgia, serif; font-size: 22px; font-weight: 600; }
-.wordmark span { color: var(--accent); }
+.brand .logo { height: 34px; width: auto; display: block; }
 /* The tagline sits under every Spotogo logo. */
-.logo-text { display: flex; flex-direction: column; line-height: 1.1; }
-.tagline { font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--faint); margin-top: 2px; }
-h1 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 34px; line-height: 1.15; letter-spacing: -0.4px; margin: 0 0 6px; }
-h2 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 22px; margin: 34px 0 8px; }
+.logo-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; }
+.tagline { font-size: 10.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+h1 { font-weight: 800; font-size: 34px; line-height: 1.15; letter-spacing: -0.4px; margin: 0 0 6px; }
+h2 { font-weight: 800; font-size: 22px; margin: 34px 0 8px; }
 .updated { color: var(--faint); font-size: 14px; margin: 0 0 24px; }
 p, li { color: var(--muted); font-size: 16px; }
 strong { color: var(--text); }
