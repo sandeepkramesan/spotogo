@@ -17,7 +17,7 @@
   <a class="brand" href="./"><span class="logo-text"><img class="logo" src="logo.png" alt="SpotoGo" /><span class="tagline">Find it. Pin it. Go.</span></span></a>
 
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated: 28 October 2026</p>
+  <p class="updated">Last updated: 2 November 2026</p>
 
   <p>SpotoGo (“we”) is an Android app, made by ftwco., that pins restaurants you discover in
     Instagram and YouTube food reels on a map. This policy explains what data SpotoGo uses, where it
@@ -64,6 +64,9 @@
     <li>If you respot someone’s public spot, the original owner’s username is kept with your copy, and their
       spot shows how many times it was respotted.</li>
     <li>We keep them until you delete them or delete your account.</li>
+    <li><strong>Improving SpotoGo:</strong> when you save a spot from a reel you shared, we also keep the reel
+      link, the place SpotoGo suggested and the place you saved (name, address and map position), so we can
+      find and fix places SpotoGo got wrong. Only SpotoGo sees this; it’s deleted with your account.</li>
   </ul>
 
   <h2>3. Profiles, follows and alerts</h2>
@@ -84,7 +87,10 @@
     <li><strong>Your location:</strong> if you allow it, SpotoGo uses it to show where you are on the
       map. Your exact location never leaves your phone and isn’t stored in your account. When you share a
       reel, SpotoGo may send an approximate position to the place-search service below so that nearby
-      restaurants rank first.</li>
+      restaurants rank first. When you tap <strong>Let’s go</strong>, your position and the spot’s are sent
+      through our server to Ola Maps to work out the routes; we don’t store them.</li>
+    <li><strong>Saved addresses</strong> (Home, Work or names you choose) are kept on your phone only, to
+      start a route from them. A route started from one is worked out the same way as above.</li>
     <li><strong>Creator profile cache:</strong> public profile details (name and photo) of creators whose
       reels you saved, kept so their pages open quickly.</li>
   </ul>
@@ -99,13 +105,12 @@
       either and doesn’t connect your accounts.</li>
     <li><strong>OpenStreetMap Nominatim</strong> and <strong>Photon (komoot)</strong>: to turn restaurant
       names and addresses into map positions. Search text, and sometimes an approximate position, is sent.</li>
-    <li><strong>Ola Maps (Krutrim)</strong>: to find restaurants in India by name. This one goes through our
-      server, not directly from your phone: Ola receives the restaurant name and area being looked up
-      (and sometimes an approximate position), not your account details. Place data © Ola Maps,
-      © OpenStreetMap contributors.</li>
+    <li><strong>Ola Maps (Krutrim)</strong>: to find restaurants in India by name and to work out routes for
+      “Let’s go”. This goes through our server, not directly from your phone: Ola receives the restaurant
+      name and area being looked up (and sometimes an approximate position), or the start and end of a
+      route, not your account details. Place and route data © Ola Maps, © OpenStreetMap contributors.</li>
     <li><strong>OpenFreeMap</strong>: map tiles. <strong>unpkg</strong> and <strong>Google Fonts</strong>:
       the map’s code and fonts.</li>
-    <li><strong>Google Maps</strong>: when you tap “Let’s go”, the destination opens in Google Maps.</li>
     <li><strong>Cloudflare</strong>: runs our server (your account and spots) and this website.</li>
     <li><strong>Resend</strong>: sends the login-code emails (it receives your email address and the code).</li>
     <li><strong>Firebase Cloud Messaging (Google)</strong>: delivers alerts, if you turn them on (it receives
