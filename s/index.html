@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Spotogo</title>
-<meta name="description" content="A restaurant shared with you on Spotogo." />
+<title>SpotoGo</title>
+<meta name="description" content="A restaurant shared with you on SpotoGo." />
 <meta name="theme-color" content="#FCFAF6" />
 <!-- Link previews (WhatsApp, Telegram…). For short links (/s/<id>) the site Worker
      (site/src/index.js) fills in the spot's name and address. -->
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content="Spotogo" />
-<meta property="og:title" content="Spotogo" />
-<meta property="og:description" content="A restaurant shared with you on Spotogo." />
+<meta property="og:site_name" content="SpotoGo" />
+<meta property="og:title" content="SpotoGo" />
+<meta property="og:description" content="A restaurant shared with you on SpotoGo." />
 <meta property="og:url" content="https://spotogo.in/s/" />
 <meta property="og:image" content="https://spotogo.in/share-card.png" />
 <meta property="og:image:width" content="1200" />
@@ -22,11 +22,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
 <!--
-  Spotogo share landing page. The spot is a base64url JSON payload (format v1, same as
+  SpotoGo share landing page. The spot is a base64url JSON payload (format v1, same as
   src/lib/spot-codec.ts): short links /s/<id> get it from the site Worker (window.FS_PAYLOAD),
   older long links carry it in the URL fragment (#<payload>).
   On Android it first tries to open the app (spotogo://add?d=…) and comes back here with
-  ?noapp=1 if Spotogo isn't installed. Set APK_URL below when the APK is published.
+  ?noapp=1 if SpotoGo isn't installed. Set APK_URL below when the APK is published.
 -->
 <style>
   :root {
@@ -74,13 +74,13 @@
 <body>
 <main>
   <div class="brand">
-    <div class="logo-text"><img class="logo" src="../logo.png" alt="Spotogo" /><div class="tagline">Find it. Pin it. Go.</div></div>
+    <div class="logo-text"><img class="logo" src="../logo.png" alt="SpotoGo" /><div class="tagline">Find it. Pin it. Go.</div></div>
   </div>
 
   <section class="card" id="spot">
     <div class="label" id="place">Shared with you</div>
     <h1 id="name">A food spot for you</h1>
-    <p class="address" id="address">Open this link on your phone to see it in Spotogo.</p>
+    <p class="address" id="address">Open this link on your phone to see it in SpotoGo.</p>
     <div class="creator hidden" id="creator">
       <div class="avatar" id="initial"></div>
       <div>
@@ -91,7 +91,7 @@
   </section>
 
   <div class="actions" id="actions">
-    <a class="btn primary" id="open" href="#">Open in Spotogo</a>
+    <a class="btn primary" id="open" href="#">Open in SpotoGo</a>
     <div class="row">
       <a class="btn" id="directions" target="_blank" rel="noopener">Directions</a>
       <a class="btn" id="reel" target="_blank" rel="noopener">Watch the reel</a>
@@ -99,7 +99,7 @@
   </div>
 
   <section class="card download">
-    <h2>Don’t have Spotogo yet?</h2>
+    <h2>Don’t have SpotoGo yet?</h2>
     <a class="btn primary" id="download" href="#">Download for Android</a>
     <p>Save restaurants from Instagram and YouTube reels and find them on your map.<br />
       Android may ask you to allow installs from your browser.</p>
@@ -115,7 +115,7 @@
 (function () {
   // Where the APK is downloaded from (e.g. a GitHub Releases "latest" asset URL).
   // Spotogo.apk is 64-bit only (nearly every phone); Spotogo-32bit.apk is for older phones.
-  // Empty until Spotogo is on Google Play: the card then says "Android app coming soon".
+  // Empty until SpotoGo is on Google Play: the card then says "Android app coming soon".
   var APK_URL = '';
   var APK_32_URL = '';
   var PACKAGE = 'com.spotogo.app';
@@ -169,13 +169,13 @@
       // Home page (no shared spot).
       $('place').textContent = 'Save the food you see in reels';
       $('name').textContent = 'Your food map, from reels';
-      $('address').textContent = 'Seen a great food reel on Instagram or YouTube? Share it to Spotogo. ' +
+      $('address').textContent = 'Seen a great food reel on Instagram or YouTube? Share it to SpotoGo. ' +
         'It finds the restaurant, pins it on your map, and gets you there with one tap.';
     }
     return;
   }
 
-  document.title = spot.n + ' · Spotogo';
+  document.title = spot.n + ' · SpotoGo';
   $('place').textContent = cityLabel(spot.a || '') || 'Shared with you';
   $('name').textContent = spot.n;
   $('address').textContent = spot.a || '';
@@ -191,7 +191,7 @@
   $('open').href = isAndroid ? intentLink : appLink;
 
   if (noApp) {
-    $('note').textContent = 'Spotogo isn’t installed on this phone yet. Download it, then open this link again.';
+    $('note').textContent = 'SpotoGo isn’t installed on this phone yet. Download it, then open this link again.';
     $('open').classList.remove('primary');
   } else if (isAndroid) {
     // Opens the app if installed; otherwise Chrome loads the ?noapp=1 fallback (this page).

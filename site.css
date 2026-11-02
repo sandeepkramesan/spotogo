@@ -1,4 +1,4 @@
-/* Shared styles for Spotogo's static pages (privacy, terms, delete-data). */
+/* Shared styles for SpotoGo's static pages (privacy, terms, delete-data). */
 :root {
   /* Mint (same as the app's light theme, 2026-11-02): warm off-white, white cards, mint brand colour. Light only. */
   --bg: #FCFAF6; --card: #FFFFFF; --text: #202120; --muted: #5E6360; --faint: #8A908C;
@@ -15,7 +15,7 @@ main { max-width: 720px; margin: 0 auto; }
 a { color: var(--accent); }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); margin-bottom: 28px; }
 .brand .logo { height: 34px; width: auto; display: block; }
-/* The tagline sits under every Spotogo logo. */
+/* The tagline sits under every SpotoGo logo. */
 .logo-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; }
 .tagline { font-size: 10.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
 h1 { font-weight: 800; font-size: 34px; line-height: 1.15; letter-spacing: -0.4px; margin: 0 0 6px; }
