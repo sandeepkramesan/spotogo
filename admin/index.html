@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SpotoGo Dashboard</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#FCFAF6" />
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* The founder dashboard on the web (user, 2026-11-03). Same data as the app's (backend/src/admin.ts);
+     sign in with the founder's email code. Not linked from anywhere, not indexed. */
+  :root {
+    --bg: #FCFAF6; --card: #FFFFFF; --text: #202120; --muted: #777C79; --faint: #9EA39F; --border: #E3DED4;
+    --accent: #48B88C; --on-accent: #10291F; --hi: #2F9E74; --soft: #E4F4EC; --warn: #D9921A; --bad: #EF4444; --dark: #183C30;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121314; --card: #1E2120; --text: #F5F3EE; --muted: #A8B0AB; --faint: #6B726F; --border: #2E3330;
+      --hi: #48B88C; --soft: #1C2E26; --warn: #F9C15A;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; line-height: 1.45; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .bar { max-width: 1180px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+  .bar img { height: 30px; }
+  .bar h1 { font-size: 17px; margin: 0; flex: 1; font-weight: 800; }
+  .btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 999px; padding: 8px 16px; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.danger { color: var(--bad); border-color: var(--bad); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  main { max-width: 1180px; margin: 0 auto; padding: 16px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+  .cols { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 900px) { .cols { grid-template-columns: 1.1fr 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  .stat .v { font-size: 26px; font-weight: 800; color: var(--hi); }
+  .stat .v.plain { color: var(--text); font-size: 22px; }
+  .stat .l { font-size: 13px; color: var(--muted); }
+  .stat .s { font-size: 12px; color: var(--faint); }
+  h2 { font-size: 17px; margin: 26px 0 10px; display: flex; align-items: center; gap: 8px; }
+  h2 .count { background: var(--accent); color: var(--on-accent); border-radius: 999px; font-size: 12px; padding: 2px 9px; }
+  .alert { border: 1.5px solid var(--warn); border-radius: 12px; padding: 10px 14px; margin: 8px 0; font-size: 14px; background: var(--card); }
+  .item { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); }
+  .item:first-child { border-top: 0; }
+  .item .main { flex: 1; min-width: 0; }
+  .item b { display: block; }
+  .tag { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--hi); }
+  .meter { height: 10px; border-radius: 5px; background: var(--soft); overflow: hidden; margin: 8px 0 6px; }
+  .meter > div { height: 100%; border-radius: 5px; }
+  .chart { display: flex; align-items: flex-end; gap: 6px; height: 140px; margin-top: 12px; }
+  .chart .col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
+  .chart .b { width: 100%; border-radius: 4px 4px 0 0; background: var(--accent); min-height: 2px; }
+  .chart .d { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--text); }
+  .chart .x { font-size: 10px; color: var(--faint); margin-top: 4px; }
+  input { width: 100%; height: 44px; border: 1px solid var(--border); border-radius: 12px; padding: 0 12px; font: inherit; font-size: 15px; background: var(--card); color: var(--text); }
+  .login { max-width: 380px; margin: 12vh auto; text-align: center; }
+  .login .card { text-align: left; display: grid; gap: 10px; }
+  .err { color: var(--bad); font-size: 14px; min-height: 20px; }
+  a { color: var(--hi); }
+  dialog { border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: var(--text); max-width: 420px; }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+.item .main > span { display: block; }
+.person{border-bottom:1px solid #E3DED4;padding-bottom:6px;margin-bottom:6px}.person:last-child{border:0}.sub{padding-left:14px}.ok{color:#2F9E74;font-size:13px;font-weight:600}.warn{color:#B7791F;font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <img src="../logo.png" alt="SpotoGo" />
+  <h1>Founder dashboard</h1>
+  <span id="who" class="muted"></span>
+  <button id="refresh" class="btn" hidden>Refresh</button>
+  <button id="logout" class="btn" hidden>Log out</button>
+</div></header>
+
+<section id="login" class="login" hidden>
+  <p class="muted">Sign in with the founder’s SpotoGo email.</p>
+  <div class="card">
+    <input id="email" type="email" placeholder="Email" autocomplete="email" />
+    <button id="send" class="btn primary">Send code</button>
+    <input id="code" inputmode="numeric" placeholder="6-digit code" hidden />
+    <button id="verify" class="btn primary" hidden>Sign in</button>
+    <div id="loginErr" class="err"></div>
+  </div>
+</section>
+
+<main id="app" hidden></main>
+<dialog id="confirm"><p id="cText"></p>
+  <textarea id="cWhy" rows="4" maxlength="600" placeholder="Why? This goes to them by email, with an apology and how to get it." style="width:100%;box-sizing:border-box;font:inherit;padding:10px;border:1px solid var(--border);border-radius:10px;margin:0 0 12px;background:var(--bg);color:var(--text)"></textarea>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+  <button class="btn" value="no" id="cNo">Cancel</button><button class="btn primary" id="cYes">OK</button></div></dialog>
+
+<script>
+(function () {
+  // ?api=http://localhost:8787 points the page at a local server (local tests only; other hosts are ignored).
+  var LOCAL = new URLSearchParams(location.search).get('api');
+  var API = LOCAL && /^http:\/\/localhost:\d+$/.test(LOCAL) ? LOCAL : 'https://api.spotogo.in';
+  var KEY = 'spotogo.admin.session';
+  var session = null;
+  try { session = localStorage.getItem(KEY); } catch (e) {}
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var n = function (x) { return Number(x || 0).toLocaleString('en-IN'); };
+  var ago = function (ms) { var m = Math.round((Date.now() - ms) / 60000); if (m < 60) return m + ' min ago'; var h = Math.round(m / 60); return h < 48 ? h + ' h ago' : Math.round(h / 24) + ' days ago'; };
+
+  function api(path, body) {
+    return fetch(API + path, {
+      method: body ? 'POST' : 'GET',
+      headers: Object.assign({ 'content-type': 'application/json' }, session ? { authorization: 'Bearer ' + session } : {}),
+      body: body ? JSON.stringify(body) : undefined,
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var e = new Error(j.error || ('Error ' + r.status)); e.status = r.status; throw e; }
+        return j;
+      });
+    });
+  }
+
+  // needWhy: turning someone down; the reason is required and goes to them by email.
+  // Resolves to false (cancelled) or the reason ('' when none is asked).
+  function ask(text, yes, danger, needWhy) {
+    return new Promise(function (resolve) {
+      $('cText').textContent = text; $('cYes').textContent = yes;
+      $('cYes').className = 'btn ' + (danger ? 'danger' : 'primary');
+      var why = $('cWhy'); why.hidden = !needWhy; why.value = '';
+      var d = $('confirm');
+      $('cYes').onclick = function () {
+        var r = why.value.trim();
+        if (needWhy && r.length < 5) { why.focus(); why.style.borderColor = '#EF4444'; return; }
+        why.style.borderColor = ''; d.close(); resolve(needWhy ? r : '');
+      };
+      $('cNo').onclick = function () { d.close(); resolve(false); };
+      d.showModal();
+      if (needWhy) why.focus();
+    });
+  }
+
+  function showLogin(msg) {
+    $('login').hidden = false; $('app').hidden = true; $('refresh').hidden = true; $('logout').hidden = true; $('who').textContent = '';
+    $('loginErr').textContent = msg || '';
+  }
+  $('send').onclick = function () {
+    var email = $('email').value.trim(); if (!email) return;
+    $('send').disabled = true; $('loginErr').textContent = '';
+    api('/auth/email/start', { email: email }).then(function () {
+      $('code').hidden = false; $('verify').hidden = false; $('code').focus(); $('send').textContent = 'Send again';
+    }).catch(function (e) { $('loginErr').textContent = e.message; }).finally(function () { $('send').disabled = false; });
+  };
+  $('verify').onclick = function () {
+    $('verify').disabled = true; $('loginErr').textContent = '';
+    api('/auth/email/verify', { email: $('email').value.trim(), code: $('code').value.trim() }).then(function (r) {
+      session = r.session; try { localStorage.setItem(KEY, session); } catch (e) {}
+      start();
+    }).catch(function (e) { $('loginErr').textContent = e.message; }).finally(function () { $('verify').disabled = false; });
+  };
+  $('logout').onclick = function () { session = null; try { localStorage.removeItem(KEY); } catch (e) {} showLogin(); };
+  $('refresh').onclick = load;
+
+  function start() {
+    if (!session) return showLogin();
+    api('/admin/api/me').then(function (r) {
+      $('login').hidden = true; $('app').hidden = false; $('refresh').hidden = false; $('logout').hidden = false;
+      $('who').textContent = r.email;
+      load();
+    }).catch(function (e) {
+      if (e.status === 403) { session = null; try { localStorage.removeItem(KEY); } catch (x) {} return showLogin('This account can’t open the dashboard.'); }
+      showLogin(e.status === 401 ? '' : e.message);
+    });
+  }
+
+  function stat(label, value, sub, plain) {
+    return '<div class="card stat"><div class="v' + (plain ? ' plain' : '') + '">' + esc(value) + '</div><div class="l">' + esc(label) + '</div>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>';
+  }
+  function meter(label, used, limit) {
+    var pct = Math.min(100, used / limit * 100), c = pct >= 90 ? 'var(--bad)' : pct >= 70 ? 'var(--warn)' : 'var(--accent)';
+    return '<div class="card"><div style="display:flex"><b style="flex:1">' + esc(label) + '</b><b style="color:' + c + '">' + (pct < 1 && used > 0 ? '&lt;1' : Math.round(pct)) + '%</b></div>' +
+      '<div class="meter"><div style="width:' + Math.max(pct, used ? 1 : 0) + '%;background:' + c + '"></div></div><div class="muted">' + n(used) + ' of ' + n(limit) + ' free</div></div>';
+  }
+
+  function render(d) {
+    var u = d.users, h = '';
+    h += '<p class="muted">Updated ' + ago(d.at) + '</p>';
+    d.alerts.forEach(function (a) { h += '<div class="alert">⚠ ' + esc(a) + '</div>'; });
+
+    var todo = d.todo.requests.length + d.todo.claims.length;
+    h += '<div class="cols"><div>';
+    var reports = d.todo.placeReports || [];
+    var creports = d.todo.contentReports || [];
+    todo += reports.length + creports.length;
+    h += '<h2>To do' + (todo ? ' <span class="count">' + todo + '</span>' : '') + '</h2><div class="card">';
+    creports.forEach(function (r) {
+      var what = r.target_type === 'user' ? 'Profile @' + esc(r.target_username) : (r.target_type === 'spot' ? 'Spot' : 'List') + ' “' + esc(r.title || '?') + '” by @' + esc(r.target_username);
+      h += '<div class="item"><div class="main"><span class="tag" style="color:var(--bad)">Report · ' + esc(r.reasonLabel) + '</span><b>' + what + '</b>' +
+        (r.note ? '<span class="muted">“' + esc(r.note) + '”</span>' : '') +
+        '<span class="muted">by @' + esc(r.reporter_username) + ' · ' + ago(r.created_at) + (r.against > 1 ? ' · ' + r.against + ' open reports about @' + esc(r.target_username) : '') + '</span></div>' +
+        '<button class="btn" data-act="cr-dismiss" data-id="' + esc(r.id) + '" data-name="' + esc(r.target_username) + '">Dismiss</button>' +
+        (r.target_type !== 'user' ? '<button class="btn" data-act="cr-hide" data-id="' + esc(r.id) + '" data-name="' + esc(r.target_username) + '">Hide</button>' : '') +
+        '<button class="btn danger" data-act="cr-suspend" data-id="' + esc(r.id) + '" data-name="' + esc(r.target_username) + '">Suspend</button></div>';
+    });
+    var KIND = { closed: 'closed for good', temp: 'closed for now', hours: 'hours wrong', open: 'open again' };
+    reports.forEach(function (g) {
+      var counts = Object.keys(KIND).filter(function (k) { return g.kinds[k]; }).map(function (k) { return KIND[k] + ' ×' + g.kinds[k]; }).join(' · ');
+      var ids = esc(g.ids.join(','));
+      h += '<div class="item"><div class="main"><span class="tag">Diners report a change</span><b>' + esc(g.name) + '</b><span class="muted">' + esc(counts) + ' · ' + ago(g.latest) + '</span>' +
+        g.notes.slice(0, 3).map(function (x) { return '<span class="muted">“' + esc(x.text) + '”' + (x.by ? ' · @' + esc(x.by) : '') + '</span>'; }).join('') +
+        '<a class="muted" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(g.name) + '%20' + g.lat + ',' + g.lng + '">Check it on Google Maps</a></div>' +
+        '<button class="btn danger" data-act="place-closed" data-id="' + ids + '" data-name="' + esc(g.name) + '">Closed for good</button>' +
+        '<button class="btn" data-act="place-temp" data-id="' + ids + '" data-name="' + esc(g.name) + '">Closed for now</button>' +
+        '<button class="btn" data-act="place-open" data-id="' + ids + '" data-name="' + esc(g.name) + '">Open</button>' +
+        '<button class="btn" data-act="place-dismiss" data-id="' + ids + '" data-name="' + esc(g.name) + '">Dismiss</button></div>';
+    });
+    if (!todo) h += '<p class="muted">Nothing waiting on you.</p>';
+    d.todo.requests.forEach(function (r) {
+      h += '<div class="item"><div class="main"><span class="tag">Verification request</span><b>@' + esc(r.username) + (r.name ? ' · ' + esc(r.name) : '') + '</b><span class="muted">' + esc(r.email) + ' · ' + n(r.spots) + ' spots · asked ' + ago(r.requested) + '</span></div>' +
+        '<button class="btn" data-act="req-no" data-id="' + esc(r.id) + '" data-name="' + esc(r.username) + '">Reject</button><button class="btn primary" data-act="req-yes" data-id="' + esc(r.id) + '" data-name="' + esc(r.username) + '">Verify</button></div>';
+    });
+    d.todo.claims.forEach(function (c) {
+      h += '<div class="item"><div class="main"><span class="tag">Restaurant claim</span><b>' + esc(c.name) + '</b><span class="muted">' + esc(c.address) + '<br>' + esc(c.role || 'Role not given') + ' · ' + esc(c.contact) + ' · ' + esc(c.email) +
+        (c.gstin ? '<br>GSTIN <b style="display:inline">' + esc(c.gstin) + '</b> · <a href="https://services.gst.gov.in/services/searchtp" target="_blank" rel="noopener">check on the GST portal</a>' : '') +
+        (c.note ? '<br>“' + esc(c.note) + '”' : '') + '</span></div>' +
+        '<button class="btn" data-act="claim-no" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '">Reject</button><button class="btn primary" data-act="claim-yes" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '">Approve</button></div>';
+    });
+    h += '</div>';
+
+    h += '<h2>Users</h2><div class="grid">' + stat('Today (DAU)', n(u.dau)) + stat('7 days (WAU)', n(u.wau)) + stat('30 days (MAU)', n(u.mau)) + stat('Stickiness', u.stickiness + '%', 'DAU ÷ MAU') + '</div>';
+    h += '<div class="grid" style="margin-top:12px">' + stat('Accounts', n(u.total), n(u.diners) + ' diners · ' + n(u.restaurants) + ' restaurants', true) + stat('New today', '+' + n(u.newToday), n(u.new7d) + ' in 7 d · ' + n(u.new30d) + ' in 30 d', true) + stat('Verified', n(u.verified), null, true) + '</div>';
+    var max = Math.max.apply(null, [1].concat(u.series.map(function (s) { return Math.max(s.active, s.signups); })));
+    h += '<div class="card" style="margin-top:12px"><span class="tag">Last 14 days · active (bars), sign-ups (dots)</span><div class="chart">';
+    u.series.forEach(function (s) {
+      h += '<div class="col" title="' + esc(s.day) + ': ' + s.active + ' active, ' + s.signups + ' sign-ups"><div class="b" style="height:' + (s.active / max * 100) + '%"></div>' +
+        (s.signups ? '<div class="d" style="bottom:' + (s.signups / max * 100) + '%"></div>' : '') + '<div class="x">' + esc(s.day.slice(8)) + '</div></div>';
+    });
+    h += '</div></div>';
+    h += '</div><div>';
+
+    h += '<h2>Today</h2><div class="grid">' + stat('Reels shared', n(d.today.reels)) + stat('Spots saved', n(d.content.spotsToday)) + stat('Routes', n(d.today.routes)) + stat('Place searches', n(d.today.placeSearches)) + '</div>';
+    h += '<h2>Reel reading (30 days)</h2><div class="card"><div class="stat"><div class="v">' + (d.reels.accuracy == null ? '–' : d.reels.accuracy + '%') + '</div><div class="l">kept as SpotoGo read it, of ' + n(d.reels.saved30d) + ' reels saved</div></div>' +
+      '<p class="muted">Renamed ' + n(d.reels.renamed) + ' · moved ' + n(d.reels.moved) + ' · found by the person ' + n(d.reels.found) + '<br>Misses become test cases: <code>cd backend; node scripts/reel-feedback.mjs</code></p></div>';
+    var rc = d.reelCheck;
+    if (rc && rc.total) {
+      var pct = Math.round(100 * rc.reviewed / rc.total);
+      h += '<h2>Reel check (saved reels)</h2><div class="card"><div class="stat"><div class="v">' + n(rc.reviewed) + ' / ' + n(rc.total) + '</div><div class="l">reviewed (' + pct + '%)' + (rc.accuracy == null ? '' : ' · reader right on ' + rc.accuracy + '% of food reels') + '</div></div>' +
+        '<div style="height:10px;border-radius:5px;background:var(--border);overflow:hidden;margin:8px 0"><div style="height:10px;width:' + pct + '%;background:var(--accent, #48B88C)"></div></div>' +
+        '<p class="muted">Right ' + n(rc.right) + ' · wrong ' + n(rc.wrong) + (rc.notInPost ? ' · name only in video ' + n(rc.notInPost) : '') + ' · not food ' + n(rc.notfood) + (rc.notfoodKinds && (rc.notfoodKinds.recipe + rc.notfoodKinds.trip + rc.notfoodKinds.other) ? ' (recipes ' + n(rc.notfoodKinds.recipe) + ', trips ' + n(rc.notfoodKinds.trip) + ', other ' + n(rc.notfoodKinds.other) + ')' : '') + ' · skipped ' + n(rc.skip) + (rc.lastAnsweredAt ? ' · last answer ' + ago(rc.lastAnsweredAt) : '') + '</p>' +
+        (rc.places && rc.places.reels ? '<p class="muted">Several places: ' + n(rc.places.reviewedReels) + ' of ' + n(rc.places.reels) + ' reels checked place by place' + (rc.places.accuracy == null ? '' : ' · places right ' + rc.places.accuracy + '%') + (rc.places.missed ? ' · ' + n(rc.places.missed) + ' missed' : '') + '</p>' : '') +
+        '<a class="btn primary" href="/admin/review/">Review reels</a></div>';
+    }
+    h += '<h2>Content</h2><div class="grid">' + stat('Spots', n(d.content.spots), n(d.content.publicSpots) + ' public', true) + stat('People saving', n(d.content.savers), null, true) + stat('Lists', n(d.content.lists), null, true) + stat('Official restaurants', n(d.content.officialRestaurants), null, true) + '</div>';
+
+    h += '<h2>Free limits (' + esc(d.limits.month) + ')</h2>';
+    d.limits.ola.forEach(function (o) { h += meter(o.api === 'ola_directions' ? 'Ola routes (this month)' : 'Ola place search (this month)', o.count, o.free); });
+    var cf = d.limits.cloudflare;
+    h += cf.today == null ? '<div class="card"><b>Cloudflare requests (today)</b><p class="muted">' + (cf.connected ? 'Couldn’t read it right now.' : 'Not connected yet: add the analytics token (scripts/save-cf-token.ps1).') + '</p></div>' : meter('Cloudflare requests (today, UTC)', cf.today, cf.limit);
+    h += '<p class="muted">Ola billing and credits: Krutrim Cloud console → Usage. Cloudflare: dashboard → Workers &amp; Pages.</p>';
+
+    // Only ones waiting here; the rest show with each person in "Find someone".
+    if (d.todo.social.length) h += '<h2>Instagram / YouTube waiting</h2><div class="card">';
+    d.todo.social.forEach(function (s) {
+      h += '<div class="item"><div class="main"><b>@' + esc(s.handle) + ' · ' + (s.platform === 'instagram' ? 'Instagram' : 'YouTube') + '</b><span class="muted">on @' + esc(s.username) + (s.followers != null ? ' · ' + n(s.followers) + ' followers' : '') + ' · ' + (s.status === 'pending' ? 'waiting' : 'showing') + ' · ' + ago(s.at) + '</span></div>' +
+        '<button class="btn danger" data-act="social-remove" data-id="' + esc(s.id) + '" data-name="' + esc(s.handle) + '">Remove</button></div>';
+    });
+    if (d.todo.social.length) h += '</div>';
+
+    h += '<h2>Find someone</h2><div class="card"><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
+    h += '</div></div>';
+    $('app').innerHTML = h;
+    $('q').oninput = searchSoon;
+  }
+
+  function load() {
+    $('app').innerHTML = $('app').innerHTML || '<p class="muted">Loading…</p>';
+    api('/admin/api/overview').then(render).catch(function (e) {
+      if (e.status === 401 || e.status === 403) return start();
+      $('app').innerHTML = '<div class="alert">Couldn’t load: ' + esc(e.message) + '</div>';
+    });
+  }
+
+  var timer = null;
+  function searchSoon() {
+    clearTimeout(timer);
+    var q = this.value.trim();
+    timer = setTimeout(function () {
+      if (q.length < 2) { $('people').innerHTML = ''; return; }
+      api('/admin/api/users?q=' + encodeURIComponent(q)).then(function (r) {
+        $('people').innerHTML = r.users.map(function (u) {
+          var status = u.verified ? '<span class="ok">Verified</span>' : u.requested ? '<span class="warn">Asked to be verified ' + ago(u.requested) + '</span>' : '<span class="muted">Not verified</span>';
+          var social = (u.social || []).map(function (s) {
+            return '<div class="item sub"><div class="main"><span>' + (s.platform === 'instagram' ? 'Instagram' : 'YouTube') + ' @' + esc(s.handle) +
+              (s.followers != null ? ' · ' + n(s.followers) + (s.platform === 'youtube' ? ' subscribers' : ' followers') : '') + '</span><span class="muted">' +
+              (s.status === 'pending' ? 'waiting' : u.verified ? 'showing on the profile' : 'hidden (not verified)') + ' · ' + ago(s.at) + '</span></div>' +
+              '<button class="btn danger" data-act="social-remove" data-id="' + esc(s.id) + '" data-name="' + esc(s.handle) + '">Remove</button></div>';
+          }).join('');
+          if (!social && u.verified) social = '<p class="muted sub">No Instagram or YouTube on the profile.</p>';
+          return '<div class="person"><div class="item"><div class="main"><b>@' + esc(u.username || '—') + (u.kind === 'restaurant' ? ' · restaurant' : '') + '</b><span class="muted">' + esc(u.email) + ' · ' + n(u.spots) + ' spots · ' + (u.last_active ? 'active ' + esc(u.last_active) : 'not active yet') + '</span>' + status + '</div>' +
+            '<button class="btn ' + (u.verified ? 'danger' : 'primary') + '" data-act="' + (u.verified ? 'unverify' : 'verify') + '" data-id="' + esc(u.id) + '" data-name="' + esc(u.username) + '">' + (u.verified ? 'Unverify' : 'Verify') + '</button></div>' + social + '</div>';
+        }).join('') || '<p class="muted">Nobody matches.</p>';
+      }).catch(function (e) { $('people').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; });
+    }, 350);
+  }
+
+  var ACTIONS = {
+    'req-yes': ['Verify @%? They get the pin badge and a Private list, and can show Instagram or YouTube.', 'Verify', false, function (id) { return api('/admin/api/requests/' + id, { approve: true }); }],
+    'req-no': ['Reject @%’s request? They stay unverified and can ask again tomorrow.', 'Reject', true, function (id, why) { return api('/admin/api/requests/' + id, { approve: false, reason: why }); }, true],
+    'cr-dismiss': ['Dismiss this report about @%? Nothing changes.', 'Dismiss', false, function (id) { return api('/admin/api/content-reports/' + encodeURIComponent(id), { action: 'dismiss' }); }],
+    'cr-hide': ['Hide this item by @% from public views? The owner still has it.', 'Hide', false, function (id) { return api('/admin/api/content-reports/' + encodeURIComponent(id), { action: 'hide' }); }],
+    'cr-suspend': ['Suspend @%? They’re logged out, can’t log in, and disappear from public views.', 'Suspend', true, function (id) { return api('/admin/api/content-reports/' + encodeURIComponent(id), { action: 'suspend' }); }],
+    'place-closed': ['Mark % as closed for good? Everyone who saved it gets a phone alert and sees a grey pin.', 'Closed for good', true, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'closed' }); }],
+    'place-temp': ['Mark % as closed for now? Everyone who saved it gets a phone alert.', 'Closed for now', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'temp' }); }],
+    'place-open': ['Mark % as open? Any closure shown for it is cleared.', 'Open', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'open' }); }],
+    'place-dismiss': ['Dismiss the reports for %? Nothing changes on the map.', 'Dismiss', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'dismiss' }); }],
+    'claim-yes': ['Approve %? They get an official page they manage, with the exact pin.', 'Approve', false, function (id) { return api('/admin/api/claims/' + id, { approve: true }); }],
+    'claim-no': ['Reject the claim for %? It stays unclaimed.', 'Reject', true, function (id) { return api('/admin/api/claims/' + id, { approve: false }); }],
+    'social-remove': ['Remove @% from that profile?', 'Remove', true, function (id, why) { return api('/admin/api/social/' + id + '/remove', { reason: why }); }, true],
+    'verify': ['Verify @%? They get the pin badge and a Private list.', 'Verify', false, function (id) { return api('/admin/api/users/' + id + '/verify', { verified: true }); }],
+    'unverify': ['Unverify @%? They lose the badge, and their Instagram/YouTube stops showing. Private spots stay private.', 'Unverify', true, function (id, why) { return api('/admin/api/users/' + id + '/verify', { verified: false, reason: why }); }, true],
+  };
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-act]');
+    if (!b) return;
+    var a = ACTIONS[b.getAttribute('data-act')];
+    if (!a) return;
+    ask(a[0].replace('%', b.getAttribute('data-name') || ''), a[1], a[2], !!a[4]).then(function (why) {
+      if (why === false) return;
+      b.disabled = true;
+      a[3](b.getAttribute('data-id'), why).then(load).catch(function (err) { alert(err.message); b.disabled = false; });
+    });
+  });
+
+  start();
+})();
+</script>
+</body>
+</html>

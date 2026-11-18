@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Reel check · SpotoGo</title>
+<link rel="icon" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FCFAF6;--card:#fff;--text:#202120;--muted:#777C79;--border:#E3DED4;--mint:#48B88C;--deep:#183C30;--soft:#E4F4EC;--red:#EF4444;--gold:#F9C15A}
+@media (prefers-color-scheme:dark){:root{--bg:#121314;--card:#1E2120;--text:#F5F3EE;--muted:#A8B0AB;--border:#2E3330;--soft:#1F3A2E}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 'Plus Jakarta Sans',system-ui,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 16px}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:720px;margin:auto}
+h1{font-size:18px;margin:0;font-weight:800}.grow{flex:1}
+.bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;max-width:720px;margin:8px auto 0}.bar>i{display:block;height:100%;background:var(--mint)}
+select,button,input{font:inherit}select{padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text)}
+main{max-width:720px;margin:auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:16px}
+.meta{color:var(--muted);font-size:13px}.chip{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:1px 9px;font-size:12px;margin:2px 4px 0 0;color:var(--muted)}
+.cap{white-space:pre-wrap;font-size:13.5px;color:var(--muted);max-height:9em;overflow:hidden;margin:8px 0;cursor:pointer;border-left:3px solid var(--border);padding-left:10px}
+.cap.open{max-height:none}
+.guess{background:var(--soft);border-radius:14px;padding:12px 14px;margin:10px 0}
+.guess b{font-size:17px}.conf{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;border-radius:999px;padding:2px 8px;margin-left:6px}
+.c-exact{background:var(--mint);color:#10291F}.c-approx{background:var(--gold);color:#3a2a00}.c-choose{background:#2F6FDB;color:#fff}.c-none{background:var(--border);color:var(--text)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{border:1.5px solid var(--border);background:var(--card);color:var(--text);border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer;text-decoration:none}
+.btn.ok{background:var(--mint);border-color:var(--mint);color:#10291F}.btn.no{border-color:var(--red);color:var(--red)}
+.btn.sel{outline:3px solid var(--deep);outline-offset:1px}
+.alts{display:none;margin-top:10px}.wrongopen .alts{display:block}
+.alt{display:block;width:100%;text-align:left;margin:6px 0;border-radius:12px}
+.row{display:flex;gap:8px;margin-top:8px}.row input{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text)}
+.done{opacity:.55}.verdict{font-weight:800;font-size:13px;margin-left:8px}
+a{color:var(--mint)}iframe{width:100%;max-width:400px;height:560px;border:0;border-radius:12px;display:block;margin:10px auto 0}
+.hint{color:var(--muted);font-size:12.5px;max-width:720px;margin:6px auto 0}
+details.hint summary{cursor:pointer;font-weight:600}details.hint[open] summary{margin-bottom:4px}
+.pl{border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin:8px 0}
+.pl .listed{font-size:12.5px;color:var(--muted)}.pl .found{margin:4px 0}
+.pl .btns{margin-top:6px}.pl .btn{padding:6px 12px;font-size:13px}
+.pl.wrongopen .alts{display:block}
+.pnum{display:inline-block;min-width:22px;height:22px;border-radius:11px;background:var(--deep);color:#fff;font-size:12px;font-weight:800;text-align:center;line-height:22px;margin-right:6px}
+.missed .row{margin-top:6px}
+.nip{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:13.5px;cursor:pointer}.nip input{margin-top:3px;width:16px;height:16px}
+.nf{display:none;margin-top:10px;border:1px solid var(--border);border-radius:14px;padding:10px 12px}.nfopen .nf{display:block}
+.nf .btn{padding:6px 14px;font-size:13px}.prev{font-size:12.5px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+<header><div class="top"><a href="/admin/" class="meta">← Dashboard</a><h1>Reel check</h1><span id="count" class="meta"></span><span class="grow"></span>
+<select id="filter"><option value="todo">To review</option><option value="all">All</option><option value="answered">Answered</option><option value="wrong">Marked wrong</option><option value="multi">Several places</option></select>
+<select id="conf"><option value="">Any guess</option><option value="exact">Exact</option><option value="approx">Area only</option><option value="choose">Pick from list</option><option value="none">Nothing found</option></select></div>
+<div class="bar"><i id="prog"></i></div>
+<details class="hint"><summary>How to answer · keys R W N S</summary>Right = SpotoGo found the right restaurant. Wrong = pick the right one or type it; if the name is only in the video (not in the caption or hashtags), tick “Name isn’t in the post”. “Not a food place” = recipes, trips, anything without a restaurant. Lists are checked place by place (“Not a restaurant” = that item isn’t a place to eat). Keys on the first card: R right (all places) · W wrong · N not food (then 1 recipe · 2 trip · 3 other, Enter saves) · S skip.</details></header>
+<main id="list"><p class="meta">Loading…</p></main>
+<script>
+(function () {
+  // ?api=http://localhost:8787 points the page at a local test server (localhost only).
+  var local = new URLSearchParams(location.search).get('api');
+  var API = local && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(local) ? local : 'https://api.spotogo.in';
+  var session = null;
+  try { session = localStorage.getItem('spotogo.admin.session'); } catch (e) {}
+  var items = [], matching = 0, summary = null;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+
+  function api(path, body) {
+    return fetch(API + path, {
+      method: body ? 'POST' : 'GET',
+      headers: Object.assign({ 'content-type': 'application/json' }, session ? { authorization: 'Bearer ' + session } : {}),
+      body: body ? JSON.stringify(body) : undefined,
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var e = new Error(j.error || 'Something went wrong'); e.status = r.status; throw e; }
+        return j;
+      });
+    });
+  }
+
+  function query(offset) {
+    return '/admin/api/reel-checks?filter=' + $('filter').value + '&conf=' + encodeURIComponent($('conf').value) + '&offset=' + offset + '&limit=30';
+  }
+  function load(more) {
+    return api(query(more ? items.length : 0)).then(function (r) {
+      items = more ? items.concat(r.items) : r.items; matching = r.matching; summary = r.summary; render();
+    }).catch(function (e) {
+      $('list').innerHTML = e.status === 401 || e.status === 403
+        ? '<div class="card">Sign in on the <a href="/admin/">dashboard</a> first, then come back.</div>'
+        : '<div class="card">' + esc(e.message) + '</div>';
+    });
+  }
+
+  function label(a) {
+    if (!a) return '';
+    if (a.places) {
+      var n = function (v) { return a.places.filter(function (p) { return p.verdict === v; }).length; };
+      return '✓ ' + n('right') + ' right' + (n('wrong') ? ' · ✗ ' + n('wrong') + ' wrong' : '') + (n('notplace') ? ' · ' + n('notplace') + ' not a restaurant' : '') + (a.missed && a.missed.length ? ' · ' + a.missed.length + ' missed' : '');
+    }
+    return { right: '✓ Right', wrong: '✗ Wrong' + (a.name ? ' → ' + esc(a.name) : a.pick != null ? ' → picked' : '') + (a.notInPost ? ' (not in the post)' : ''), notfood: 'Not food' + (a.kind ? ': ' + (KINDS[a.kind] || a.kind) + (a.note ? ' (' + esc(a.note) + ')' : '') : ''), skip: 'Skipped' }[a.verdict] || '';
+  }
+  var CONF = { exact: 'exact', approx: 'area only', choose: 'pick', none: 'not found' };
+  function found(g) {
+    if (!g) return '<b>Reader error</b>';
+    var conf = g.confidence || 'none';
+    return g.name ? '<b>' + esc(g.name) + '</b><span class="conf c-' + conf + '">' + CONF[conf] + '</span><div class="meta">' + esc(g.address) + (g.outsideIndia ? ' · outside India: ' + esc(g.outsideIndia) : '') + '</div>'
+      : '<b>Nothing found</b><span class="conf c-none">not found</span>';
+  }
+  // A reel that lists several places: one row per place, each answered on its own.
+  function multiCard(i) {
+    var a = i.answer, prev = a && a.places ? a.places : null;
+    var rows = i.places.map(function (p, k) {
+      var pa = prev && prev[k] || {}, alts = (p.guess && p.guess.alternatives || []).filter(Boolean);
+      var sel = function (v) { return pa.verdict === v ? ' sel' : ''; };
+      return '<div class="pl' + (pa.verdict === 'wrong' ? ' wrongopen' : '') + '" data-p="' + k + '" data-v="' + esc(pa.verdict || '') + '" data-pick="' + (pa.pick == null ? '' : pa.pick) + '">' +
+        '<div class="listed"><span class="pnum">' + (k + 1) + '</span>The post lists <b>' + esc(p.name) + '</b>' + (p.address ? ' · ' + esc(p.address) : '') + '</div>' +
+        '<div class="found">' + (p.error ? '<b>Reader error</b><div class="meta">' + esc(p.error) + '</div>' : found(p.guess)) + '</div>' +
+        '<div class="btns"><button class="btn ok' + sel('right') + '" data-act="pv" data-v="right">✓ Right</button><button class="btn no' + sel('wrong') + '" data-act="pv" data-v="wrong">✗ Wrong</button><button class="btn' + sel('notplace') + '" data-act="pv" data-v="notplace">Not a restaurant</button><button class="btn' + sel('skip') + '" data-act="pv" data-v="skip">Skip</button></div>' +
+        '<div class="alts">' + (alts.length ? '<div class="meta">Is it one of these?</div>' + alts.map(function (x, j) { return '<button class="btn alt' + (pa.pick === j ? ' sel' : '') + '" data-act="ppick" data-k="' + j + '"><b>' + esc(x.name) + '</b><br><span class="meta">' + esc(x.address) + '</span></button>'; }).join('') : '') +
+        '<div class="meta" style="margin-top:8px">Or type it</div><div class="row"><input placeholder="Restaurant name" data-f="name" value="' + esc(pa.name || '') + '"><input placeholder="Area, city" data-f="city" value="' + esc(pa.city || '') + '"></div></div></div>';
+    }).join('');
+    var missed = (a && a.missed || []).map(missedRow).join('');
+    // A one-place right/wrong from before place-by-place checks; not-food and skip answers still stand.
+    var settled = a && (a.places || a.verdict === 'notfood' || a.verdict === 'skip');
+    var older = a && !settled ? '<div class="prev">Answered before as one place: ' + label(a) + '. Check each place to replace it.</div>' : '';
+    return '<div class="card ' + (settled ? 'done' : '') + '" data-code="' + esc(i.code) + '" data-multi="1">' +
+      '<div class="meta">@' + esc(i.owner) + ' ' + (i.collections || []).map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join('') + '<span class="verdict">' + (settled ? label(a) : '') + '</span></div>' +
+      '<div class="cap" title="Tap to expand">' + esc(i.caption) + '</div>' +
+      '<div class="meta"><a href="#" data-act="play">▶ Play the reel here</a> · <a href="' + esc(i.url) + '" target="_blank" rel="noopener">open on Instagram</a></div><div class="player"></div>' + older +
+      '<div class="meta" style="margin-top:10px">This reel lists ' + i.places.length + ' places. SpotoGo saves each as its own spot:</div>' + rows +
+      '<div class="missed">' + missed + '</div>' +
+      '<div class="btns"><button class="btn" data-act="addmissed">+ Add a place it missed</button></div>' +
+      '<div class="btns"><button class="btn ok" data-act="saveplaces">Save answers</button><button class="btn" data-act="notfood">Not a food place</button><button class="btn" data-act="skip">Skip</button>' + (a ? '<button class="btn" data-act="clear">Undo</button>' : '') + '</div>' + notFoodPanel(a) + '</div>';
+  }
+  // "Not a food place": what it is (recipe / trip / other) and a note.
+  var KINDS = { recipe: 'Recipe', trip: 'Trip', other: 'Other' };
+  function notFoodPanel(a) {
+    var k = a && a.verdict === 'notfood' ? a.kind : null;
+    return '<div class="nf" data-kind="' + esc(k || '') + '"><div class="meta">What is it?</div><div class="btns">' +
+      Object.keys(KINDS).map(function (x, i) { return '<button class="btn' + (k === x ? ' sel' : '') + '" data-act="nfkind" data-k="' + x + '">' + (i + 1) + ' · ' + KINDS[x] + '</button>'; }).join('') +
+      '</div><div class="row"><input placeholder="What exactly? e.g. chicken curry recipe, Goa villa stay" data-f="note" maxlength="200" value="' + esc(a && a.note || '') + '"></div>' +
+      '<div class="btns"><button class="btn ok" data-act="nfsave">Save</button></div></div>';
+  }
+  function saveNotFood(c) {
+    var p = c.querySelector('.nf'), kind = p.dataset.kind, note = p.querySelector('[data-f=note]').value.trim();
+    if (!kind) { p.querySelector('.meta').textContent = 'Pick Recipe, Trip or Other first.'; return; }
+    if (kind === 'other' && !note) { p.querySelector('[data-f=note]').focus(); return; }
+    answer(c.dataset.code, { verdict: 'notfood', kind: kind, note: note || undefined });
+  }
+  function missedRow(m) {
+    m = m || {};
+    return '<div class="row" data-missed="1"><input placeholder="Restaurant it missed" data-f="mname" value="' + esc(m.name || '') + '"><input placeholder="Area, city" data-f="mcity" value="' + esc(m.city || '') + '"></div>';
+  }
+  // What the card's place rows say; `all` answers every place the same (the R key).
+  function placesAnswer(c, all) {
+    var places = [].map.call(c.querySelectorAll('.pl'), function (row) {
+      var v = all || row.dataset.v || 'skip';
+      if (v !== 'wrong') return { verdict: v };
+      var pick = row.dataset.pick;
+      return { verdict: 'wrong', pick: pick !== '' && pick != null ? Number(pick) : undefined, name: row.querySelector('[data-f=name]').value.trim(), city: row.querySelector('[data-f=city]').value.trim() };
+    });
+    var missed = [].map.call(c.querySelectorAll('[data-missed]'), function (r) {
+      return { name: r.querySelector('[data-f=mname]').value.trim(), city: r.querySelector('[data-f=mcity]').value.trim() };
+    }).filter(function (m) { return m.name; });
+    return { verdict: 'places', places: places, missed: missed };
+  }
+  function card(i) {
+    if (i.places && i.places.length > 1) return multiCard(i);
+    var a = i.answer, conf = i.error ? 'none' : (i.confidence || 'none');
+    var guess = i.error ? '<b>Reader error</b><div class="meta">' + esc(i.error) + '</div>'
+      : i.name ? '<b>' + esc(i.name) + '</b><span class="conf c-' + conf + '">' + ({ exact: 'exact', approx: 'area only', choose: 'pick', none: 'not found' }[conf]) + '</span><div class="meta">' + esc(i.address) + (i.outsideIndia ? ' · outside India: ' + esc(i.outsideIndia) : '') + '</div>'
+      : '<b>Nothing found</b><span class="conf c-none">not found</span>';
+    var alts = (i.alternatives || []).filter(Boolean);
+    return '<div class="card ' + (a ? 'done' : '') + '" data-code="' + esc(i.code) + '">' +
+      '<div class="meta">@' + esc(i.owner) + ' ' + (i.collections || []).map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join('') + '<span class="verdict">' + label(a) + '</span></div>' +
+      '<div class="cap" title="Tap to expand">' + esc(i.caption) + '</div>' +
+      '<div class="meta"><a href="#" data-act="play">▶ Play the reel here</a> · <a href="' + esc(i.url) + '" target="_blank" rel="noopener">open on Instagram</a>' + (i.pinned && i.pinned.length > 1 ? ' · lists ' + i.pinned.length + ' places' : '') + '</div><div class="player"></div>' +
+      '<div class="guess"><div class="meta">SpotoGo found</div>' + guess + '</div>' +
+      '<div class="btns"><button class="btn ok" data-act="right">✓ Right</button><button class="btn no" data-act="wrong">✗ Wrong</button><button class="btn" data-act="notfood">Not a food place</button><button class="btn" data-act="skip">Skip</button>' + (a ? '<button class="btn" data-act="clear">Undo</button>' : '') + '</div>' + notFoodPanel(a) +
+      '<div class="alts">' + (alts.length ? '<div class="meta">Is it one of these?</div>' + alts.map(function (p, k) { return '<button class="btn alt" data-act="pick" data-k="' + k + '"><b>' + esc(p.name) + '</b><br><span class="meta">' + esc(p.address) + '</span></button>'; }).join('') : '') +
+      '<div class="meta" style="margin-top:8px">Or type it</div><div class="row"><input placeholder="Restaurant name" data-f="name" value="' + esc(a && a.name || '') + '"><input placeholder="Area, city" data-f="city" value="' + esc(a && a.city || '') + '"></div>' +
+      '<label class="nip"><input type="checkbox" data-f="nip"' + (a && a.notInPost ? ' checked' : '') + '><span><b>Name isn’t in the post</b><br><span class="meta">Only the video shows it: no name in the caption or hashtags. The name is optional then. Saved, but not counted against SpotoGo.</span></span></label>' +
+      '<div class="btns"><button class="btn ok" data-act="save">Save</button></div></div></div>';
+  }
+  function render() {
+    if (summary) {
+      var ps = summary.places;
+      $('count').textContent = summary.reviewed + ' of ' + summary.total + ' reviewed' + (summary.accuracy == null ? '' : ' · reader right ' + summary.accuracy + '%') +
+        (summary.notInPost ? ' · ' + summary.notInPost + ' name only in video' : '') +
+        (ps && ps.reels ? ' · several places: ' + ps.reviewedReels + ' of ' + ps.reels + ' reels' + (ps.accuracy == null ? '' : ', places right ' + ps.accuracy + '%') : '');
+      $('prog').style.width = (summary.total ? 100 * summary.reviewed / summary.total : 0) + '%';
+    }
+    $('list').innerHTML = items.map(card).join('') +
+      (matching > items.length ? '<button class="btn" id="more" style="width:100%">Show more (' + (matching - items.length) + ')</button>' : '') +
+      (items.length ? '' : '<p class="meta">Nothing here.</p>');
+  }
+  function answer(code, body) {
+    return api('/admin/api/reel-checks/' + encodeURIComponent(code), Object.assign({}, body)).then(function (res) {
+      var it = items.find(function (x) { return x.code === code; });
+      var was = it && it.answer;
+      if (it) it.answer = body.verdict === 'clear' ? null : Object.assign({}, body, res && res.verdict ? { verdict: res.verdict } : {}, { at: Date.now() });
+      if (summary) summary.reviewed += (body.verdict === 'clear' ? (was ? -1 : 0) : (was ? 0 : 1));
+      // The place-by-place score in the header follows too.
+      var ps = summary && summary.places;
+      if (ps) {
+        var tally = function (a, sign) {
+          if (!a || !a.places) return;
+          ps.reviewedReels += sign;
+          a.places.forEach(function (p) { if (ps[p.verdict] != null) ps[p.verdict] += sign; });
+          ps.missed += sign * (a.missed ? a.missed.length : 0);
+        };
+        tally(was, -1); tally(it && it.answer, 1);
+        ps.accuracy = ps.right + ps.wrong ? Math.round(100 * ps.right / (ps.right + ps.wrong)) : null;
+      }
+      if ($('filter').value === 'todo' && body.verdict !== 'clear') {
+        var el = document.querySelector('.card[data-code="' + CSS.escape(code) + '"]');
+        items = items.filter(function (x) { return x.code !== code; }); matching--;
+        if (el) { el.style.transition = 'opacity .2s'; el.style.opacity = '0'; setTimeout(render, 180); } else render();
+        if (items.length < 5 && matching > items.length) load(true);
+      } else render();
+    }).catch(function (e) { alert('Couldn’t save: ' + e.message); });
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act],.cap,#more'); if (!t) return;
+    if (t.id === 'more') { load(true); return; }
+    if (t.classList.contains('cap')) { t.classList.toggle('open'); return; }
+    var c = t.closest('.card'), code = c.dataset.code, act = t.dataset.act; e.preventDefault();
+    var it = items.find(function (x) { return x.code === code; });
+    if (act === 'play') { c.querySelector('.player').innerHTML = '<iframe src="https://www.instagram.com/' + (it.url.indexOf('/p/') >= 0 ? 'p' : 'reel') + '/' + encodeURIComponent(code) + '/embed/" loading="lazy" allowfullscreen></iframe>'; return; }
+    if (act === 'notfood') {
+      c.classList.toggle('nfopen'); c.classList.remove('wrongopen');
+      if (c.classList.contains('nfopen')) c.querySelector('.nf').scrollIntoView({ block: 'nearest' });
+      return;
+    }
+    if (act === 'nfkind') {
+      var nf = t.closest('.nf'); nf.dataset.kind = t.dataset.k;
+      [].forEach.call(nf.querySelectorAll('[data-act=nfkind]'), function (b) { b.classList.toggle('sel', b === t); });
+      nf.querySelector('.meta').textContent = 'What is it?';
+      nf.querySelector('[data-f=note]').focus();
+      return;
+    }
+    if (act === 'nfsave') { saveNotFood(c); return; }
+    if (act === 'pv') {
+      var row = t.closest('.pl'); row.dataset.v = t.dataset.v;
+      [].forEach.call(row.querySelectorAll('[data-act=pv]'), function (b) { b.classList.toggle('sel', b === t); });
+      row.classList.toggle('wrongopen', t.dataset.v === 'wrong');
+      return;
+    }
+    if (act === 'ppick') {
+      var prow = t.closest('.pl'); prow.dataset.pick = t.dataset.k;
+      [].forEach.call(prow.querySelectorAll('[data-act=ppick]'), function (b) { b.classList.toggle('sel', b === t); });
+      return;
+    }
+    if (act === 'addmissed') { c.querySelector('.missed').insertAdjacentHTML('beforeend', missedRow()); c.querySelector('.missed [data-missed]:last-child input').focus(); return; }
+    if (act === 'saveplaces') {
+      var body = placesAnswer(c);
+      var bad = body.places.findIndex(function (p) { return p.verdict === 'wrong' && p.pick === undefined && !p.name; });
+      if (bad >= 0) { c.querySelectorAll('.pl')[bad].querySelector('[data-f=name]').focus(); return; }
+      answer(code, body); return;
+    }
+    if (act === 'wrong') { c.classList.toggle('wrongopen'); c.querySelector('[data-act=wrong]').classList.toggle('sel'); return; }
+    var nip = function () { var x = c.querySelector('[data-f=nip]'); return !!(x && x.checked) || undefined; };
+    if (act === 'pick') { answer(code, { verdict: 'wrong', pick: Number(t.dataset.k), notInPost: nip() }); return; }
+    if (act === 'save') {
+      var name = c.querySelector('[data-f=name]').value.trim(), city = c.querySelector('[data-f=city]').value.trim();
+      // With "Name isn't in the post" ticked the name is optional (the reader can't use it anyway).
+      if (!name && !nip()) { c.querySelector('[data-f=name]').focus(); return; }
+      answer(code, { verdict: 'wrong', name: name, city: city, notInPost: nip() }); return;
+    }
+    answer(code, { verdict: act });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.target.tagName === 'INPUT' && e.target.dataset.f === 'note' && e.key === 'Enter') { saveNotFood(e.target.closest('.card')); return; }
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    var c = document.querySelector('.card[data-code]'); if (!c) return;
+    if (c.classList.contains('nfopen') && /^[123]$/.test(e.key)) { c.querySelectorAll('[data-act=nfkind]')[Number(e.key) - 1].click(); e.preventDefault(); return; }
+    if (e.key.toLowerCase() === 'n') { c.querySelector('[data-act=notfood]').click(); return; }
+    var k = { r: 'right', n: 'notfood', s: 'skip' }[e.key.toLowerCase()];
+    if (c.dataset.multi) {
+      if (k === 'right') answer(c.dataset.code, placesAnswer(c, 'right'));
+      else if (k) answer(c.dataset.code, { verdict: k });
+      if (e.key.toLowerCase() === 'w') c.querySelector('.pl [data-v=wrong]').click();
+      return;
+    }
+    if (k) answer(c.dataset.code, { verdict: k });
+    if (e.key.toLowerCase() === 'w') c.querySelector('[data-act=wrong]').click();
+  });
+  $('filter').onchange = function () { load(false); };
+  $('conf').onchange = function () { load(false); };
+  if (!session) $('list').innerHTML = '<div class="card">Sign in on the <a href="/admin/">dashboard</a> first, then come back.</div>';
+  else load(false);
+})();
+</script>
+</body>
+</html>

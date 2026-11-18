@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.spotogo.app",
+      "sha256_cert_fingerprints": ["7B:CA:2E:57:CD:87:58:4B:AE:9E:02:CB:58:73:1F:78:E3:64:72:E7:00:90:CA:72:39:D5:6C:5C:5A:A4:59:78"]
+    }
+  }
+]
