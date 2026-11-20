@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SpotoGo for restaurants</title>
+<meta name="description" content="Claim your restaurant on SpotoGo, post today’s specials to everyone who saved you, and see how many people saved you and went." />
+<meta name="theme-color" content="#FCFAF6" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<style>
+  /* SpotoGo for restaurants on the web (user, 2026-11-18: owners mostly use a computer). Same API as
+     the app's restaurant screens (backend/src/restaurants.ts, owner-growth.ts); signs in with a
+     restaurant account (email code). */
+  :root {
+    --bg: #FCFAF6; --card: #FFFFFF; --text: #202120; --muted: #777C79; --faint: #9EA39F; --border: #E3DED4;
+    --accent: #48B88C; --on-accent: #10291F; --hi: #2F9E74; --soft: #E4F4EC; --warn: #D9921A; --bad: #EF4444; --dark: #183C30;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; line-height: 1.45; font-size: 14.5px; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .bar { max-width: 1120px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+  .bar img { height: 28px; display: block; }
+  .bar h1 { font-size: 15px; margin: 0; flex: 1; font-weight: 800; }
+  .bar a { color: inherit; text-decoration: none; }
+  main { max-width: 1120px; margin: 0 auto; padding: 16px 16px 48px; }
+  .btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 999px; padding: 8px 16px; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.dark { background: var(--dark); border-color: var(--dark); color: #fff; }
+  .btn.danger { color: var(--bad); border-color: var(--bad); }
+  .btn.small { padding: 5px 12px; font-size: 13px; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; min-width: 0; }
+  .stack { display: grid; gap: 14px; align-content: start; min-width: 0; }
+  .cols { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .cols { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); } }
+  h2 { font-size: 16px; margin: 0 0 10px; font-weight: 800; }
+  h3 { font-size: 12px; margin: 14px 0 6px; text-transform: uppercase; letter-spacing: .8px; color: var(--hi); font-weight: 800; }
+  .muted { color: var(--muted); font-size: 13px; }
+  p { margin: 6px 0; }
+  label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  input, select, textarea { width: 100%; height: 40px; border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; font: inherit; font-size: 14.5px; background: var(--bg); color: var(--text); min-width: 0; }
+  textarea { height: auto; padding: 10px 12px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .form { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .form .wide { grid-column: 1 / -1; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row > input { flex: 1; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 3px; flex-wrap: wrap; }
+  .seg button { border: 0; background: none; font: inherit; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 999px; cursor: pointer; color: var(--text); }
+  .seg button.on { background: var(--accent); color: var(--on-accent); }
+  .seg button.on.bad { background: var(--bad); color: #fff; }
+  .item { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); }
+  .item:first-of-type { border-top: 0; }
+  .item .main { flex: 1 1 240px; min-width: 0; }
+  .item .main b, .item .main span { display: block; overflow-wrap: anywhere; }
+  .tiles { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tile { background: var(--dark); color: #fff; border-radius: 12px; padding: 12px 8px; text-align: center; }
+  .tile b { display: block; font-size: 24px; font-weight: 800; }
+  .tile span { font-size: 12px; opacity: .85; }
+  .menu { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .menu li { display: flex; align-items: flex-end; gap: 6px; }
+  .menu .dots { flex: 1; border-bottom: 2px dotted var(--accent); margin-bottom: 5px; min-width: 10px; }
+  .menu .rt { color: var(--hi); font-weight: 800; }
+  .demand { background: var(--soft); border-radius: 12px; padding: 10px 12px; color: var(--dark); }
+  .demand b { font-size: 20px; }
+  .note { background: #FFF8E8; border: 1px solid #F9C15A; border-radius: 12px; padding: 10px 12px; }
+  .err { color: var(--bad); font-size: 13.5px; min-height: 18px; }
+  .ok { color: var(--hi); font-weight: 700; font-size: 13.5px; }
+  .hero { text-align: center; max-width: 560px; margin: 8vh auto 18px; }
+  .hero h2 { font-size: 26px; line-height: 1.2; }
+  .login { max-width: 400px; margin: 0 auto; display: grid; gap: 10px; }
+  .pill { display: inline-block; background: var(--soft); color: var(--dark); border: 1px solid var(--accent); border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .8px; padding: 2px 9px; }
+  .back { color: var(--hi); font-weight: 700; text-decoration: none; display: inline-block; margin-bottom: 10px; }
+  .switch { display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; }
+  .switch input { width: 18px; height: 18px; }
+  a { color: var(--hi); }
+  #pinMap { height: 360px; border-radius: 12px; border: 1px solid var(--border); margin-top: 10px; }
+  .chip { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; margin: 4px 6px 0 0; font-size: 13px; font-weight: 600; background: var(--bg); cursor: pointer; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <a href="/business/"><img src="/logo.png" alt="SpotoGo" /></a>
+  <h1>for restaurants</h1>
+  <span id="who" class="muted"></span>
+  <button id="logout" class="btn small" hidden>Log out</button>
+</div></header>
+<main id="app"><p class="muted">Loading…</p></main>
+<iframe id="kitFrame" title="" hidden style="width:1px;height:1px;border:0"></iframe>
+
+<script>
+(function () {
+  // ?api=http://localhost:8787 points the page at a local server (local tests only; other hosts are ignored).
+  var LOCAL = new URLSearchParams(location.search).get('api');
+  var API = LOCAL && /^http:\/\/localhost:\d+$/.test(LOCAL) ? LOCAL : 'https://api.spotogo.in';
+  var KEY = 'spotogo.business.session';
+  var session = null;
+  try { session = localStorage.getItem(KEY); } catch (e) {}
+  var $ = function (id) { return document.getElementById(id); };
+  var app = $('app');
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var n = function (x) { return Number(x || 0).toLocaleString('en-IN'); };
+  var params = new URLSearchParams(location.search);
+  var pendingClaim = params.get('claim'); // "<slug>/<cell>" from a place page's "Claim this page"
+
+  function api(path, opts) {
+    opts = opts || {};
+    return fetch(API + path, {
+      method: opts.method || (opts.body ? 'POST' : 'GET'),
+      headers: Object.assign({ 'content-type': 'application/json' }, session ? { authorization: 'Bearer ' + session } : {}),
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var e = new Error(j.error || ('Error ' + r.status)); e.status = r.status; throw e; }
+        return j;
+      });
+    });
+  }
+  function go(hash) { if (location.hash !== hash) location.hash = hash; else route(); }
+  window.addEventListener('hashchange', route);
+
+  // ---------- GST number (same rules as the server and the app) ----------
+  var CH = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  function gstinProblem(g) {
+    if (!g) return 'Add your restaurant’s GST number (GSTIN).';
+    if (g.length !== 15) return 'A GST number has 15 characters, like 27AAPFU0939F1ZV.';
+    if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)) return 'That doesn’t look like a GST number. Check it on your GST certificate.';
+    var st = Number(g.slice(0, 2));
+    if (!((st >= 1 && st <= 38) || st === 97 || st === 99)) return 'The first two digits should be your state’s GST code.';
+    var sum = 0;
+    for (var i = 0; i < 14; i++) { var p = CH.indexOf(g[i]) * (i % 2 === 0 ? 1 : 2); sum += Math.floor(p / 36) + (p % 36); }
+    if (CH[(36 - (sum % 36)) % 36] !== g[14]) return 'That GST number has a typo: its last character doesn’t match.';
+    return null;
+  }
+
+  // ---------- Sign in ----------
+  function showLogin(msg) {
+    $('who').textContent = ''; $('logout').hidden = true;
+    app.innerHTML =
+      '<div class="hero"><h2>Your restaurant on SpotoGo</h2><p class="muted">People save restaurants they see in food reels. Claim yours to post today’s specials to everyone who saved you, keep your hours right, and see how many people saved you and went. Free.</p></div>' +
+      '<div class="card login"><label>Your restaurant’s email<input id="email" type="email" autocomplete="email" placeholder="you@yourrestaurant.com" /></label>' +
+      '<button id="send" class="btn primary">Send me a code</button>' +
+      '<label id="codeLabel" hidden>6-digit code from the email<input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" /></label>' +
+      '<button id="verify" class="btn primary" hidden>Sign in</button>' +
+      '<div id="loginErr" class="err">' + esc(msg || '') + '</div>' +
+      '<p class="muted">Use the restaurant’s own email, not the one you use SpotoGo with for eating out.</p></div>';
+    $('send').onclick = function () {
+      var email = $('email').value.trim(); if (!email) return;
+      $('send').disabled = true; $('loginErr').textContent = '';
+      api('/auth/email/start', { body: { email: email } }).then(function () {
+        $('codeLabel').hidden = false; $('verify').hidden = false; $('code').focus(); $('send').textContent = 'Send again';
+      }).catch(function (e) { $('loginErr').textContent = e.message; }).finally(function () { $('send').disabled = false; });
+    };
+    $('email').onkeydown = function (e) { if (e.key === 'Enter') $('send').click(); };
+    $('code').onkeydown = function (e) { if (e.key === 'Enter') $('verify').click(); };
+    $('verify').onclick = function () {
+      $('verify').disabled = true; $('loginErr').textContent = '';
+      api('/auth/email/verify', { body: { email: $('email').value.trim(), code: $('code').value.trim(), kind: 'restaurant' } }).then(function (r) {
+        session = r.session; try { localStorage.setItem(KEY, session); } catch (e) {}
+        start();
+      }).catch(function (e) { $('loginErr').textContent = e.message; }).finally(function () { $('verify').disabled = false; });
+    };
+  }
+  $('logout').onclick = function () { session = null; try { localStorage.removeItem(KEY); } catch (e) {} showLogin(); };
+
+  var me = null;
+  function start() {
+    if (!session) return showLogin();
+    api('/me').then(function (r) {
+      me = r.user || r;
+      if (me.kind !== 'restaurant') {
+        session = null; try { localStorage.removeItem(KEY); } catch (e) {}
+        return showLogin('That email is a SpotoGo account for eating out. Sign in with your restaurant’s own email.');
+      }
+      $('who').textContent = me.email || ''; $('logout').hidden = false;
+      if (pendingClaim) { var c = pendingClaim; pendingClaim = null; return go('#claim=' + c); }
+      route();
+    }).catch(function (e) {
+      if (e.status === 401) { session = null; try { localStorage.removeItem(KEY); } catch (x) {} return showLogin(); }
+      app.innerHTML = '<div class="card"><p class="err">' + esc(e.message) + '</p></div>';
+    });
+  }
+
+  function route() {
+    if (!session || !me) return;
+    var h = location.hash.slice(1);
+    if (h.indexOf('r=') === 0) return manage(decodeURIComponent(h.slice(2)));
+    if (h.indexOf('claim=') === 0) return claimFromPage(h.slice(6));
+    if (h === 'find') return find();
+    home();
+  }
+
+  // ---------- Home ----------
+  var mine = { restaurants: [], pending: [] };
+  function home() {
+    app.innerHTML = '<p class="muted">Loading…</p>';
+    api('/me/restaurants').then(function (r) {
+      mine = r;
+      var h = '<div class="cols"><div class="stack">';
+      h += '<div class="card"><h2>Your restaurants</h2>';
+      if (!r.restaurants.length) h += '<p class="muted">None yet. Find your restaurant and claim it: we check the GST number and approve it, usually within a day.</p>';
+      r.restaurants.forEach(function (x) {
+        h += '<div class="item"><div class="main"><b>' + esc(x.name) + ' <span class="pill" style="display:inline-block">OFFICIAL</span></b><span class="muted">' + esc(x.address) + '</span></div>' +
+          '<a class="btn primary" href="#r=' + encodeURIComponent(x.id) + '">Manage</a></div>';
+      });
+      r.pending.forEach(function (x) {
+        h += '<div class="item"><div class="main"><b>' + esc(x.name) + '</b><span class="muted">' + esc(x.address) + '</span><span class="muted">SpotoGo is checking your claim. You’ll get an email when it’s approved.</span></div></div>';
+      });
+      h += '<p style="margin-top:12px"><a class="btn' + (r.restaurants.length ? '' : ' primary') + '" href="#find">Claim ' + (r.restaurants.length ? 'another' : 'your') + ' restaurant</a></p></div>';
+      h += '</div><div class="stack"><div class="card"><h2>What you get</h2>' +
+        '<p><b>Today’s specials</b> go to the phone of everyone who saved you.</p>' +
+        '<p><b>Your page on Google</b> shows how many people saved you and what they order.</p>' +
+        '<p><b>A QR sticker</b> for your counter and a story card for Instagram.</p>' +
+        '<p><b>A Monday email</b> with your week: new saves, visits, top dish and the reels that brought people.</p></div></div></div>';
+      app.innerHTML = h;
+    }).catch(fail);
+  }
+  function fail(e) {
+    if (e && e.status === 401) { session = null; try { localStorage.removeItem(KEY); } catch (x) {} return showLogin(); }
+    app.innerHTML = '<div class="card"><p class="err">' + esc(e && e.message) + '</p><a class="btn" href="#">Back</a></div>';
+  }
+
+  // ---------- Find and claim ----------
+  function find() {
+    app.innerHTML = '<a class="back" href="#">← Your restaurants</a><div class="card" style="max-width:720px"><h2>Find your restaurant</h2>' +
+      '<div class="row"><input id="q" placeholder="Restaurant name and area, e.g. Konkan Katta Dadar" autocomplete="off" /><button id="search" class="btn primary">Search</button></div>' +
+      '<div id="results"></div><p class="muted" style="margin-top:14px">Can’t find it? New places often aren’t on the map yet. <a href="#" id="addOwn">Add it yourself</a> with its address and a pin.</p></div>';
+    var run = function () {
+      var q = $('q').value.trim(); if (q.length < 2) return;
+      $('results').innerHTML = '<p class="muted">Searching…</p>';
+      api('/places/autocomplete?q=' + encodeURIComponent(q)).then(function (r) {
+        var list = (r.places || []).slice(0, 10);
+        $('results').innerHTML = list.map(function (p, i) {
+          return '<div class="item"><div class="main"><b>' + esc(p.name) + '</b><span class="muted">' + esc(p.address) + '</span></div><button class="btn" data-pick="' + i + '">This is mine</button></div>';
+        }).join('') || '<p class="muted">Nothing found. Try the name with the area or city.</p>';
+        Array.prototype.forEach.call(document.querySelectorAll('[data-pick]'), function (b) {
+          b.onclick = function () { claimForm(list[Number(b.getAttribute('data-pick'))]); };
+        });
+      }).catch(function (e) { $('results').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; });
+    };
+    $('search').onclick = run;
+    $('q').onkeydown = function (e) { if (e.key === 'Enter') run(); };
+    $('addOwn').onclick = function (e) { e.preventDefault(); addOwn($('q').value.trim()); };
+    $('q').focus();
+  }
+
+  // ---------- A place that isn't on the map yet ----------
+  function addOwn(guess) {
+    app.innerHTML = '<a class="back" href="#find">← Search again</a><div class="card" style="max-width:820px"><h2>Add your restaurant</h2>' +
+      '<p class="muted">For places that aren’t on the map yet. We check every claim, including the pin.</p>' +
+      '<div class="form"><label>Restaurant name<input id="oName" maxlength="80" value="' + esc(guess) + '" /></label>' +
+      '<label>Full address<input id="oAddr" maxlength="200" placeholder="Shop 4, Gokhale Road, Dadar West, Mumbai 400028" /></label></div>' +
+      '<h3>Put the pin on your door</h3><div class="row"><input id="oFind" placeholder="Search your area, e.g. Dadar West Mumbai" /><button id="oGo" class="btn">Go</button></div>' +
+      '<div id="pinMap"></div><p class="muted" id="pinHint">Click the map where your restaurant is. You can drag the pin.</p>' +
+      '<div id="oErr" class="err"></div><p><button id="oNext" class="btn primary">Next</button></p></div>';
+    var pin = null, marker = null;
+    var map = new maplibregl.Map({ container: 'pinMap', style: 'https://tiles.openfreemap.org/styles/positron', center: [78.9, 22.5], zoom: 4 });
+    // The box gets its final size a moment after the page is drawn: fit the map to it.
+    setTimeout(function () { map.resize(); }, 60);
+    map.on('load', function () { map.resize(); });
+    var put = function (ll) {
+      pin = { lat: ll.lat, lng: ll.lng };
+      if (!marker) { marker = new maplibregl.Marker({ color: '#48B88C', draggable: true }).setLngLat(ll).addTo(map); marker.on('dragend', function () { var p = marker.getLngLat(); pin = { lat: p.lat, lng: p.lng }; }); }
+      else marker.setLngLat(ll);
+      $('pinHint').textContent = 'Pin placed. Drag it to your door if it’s off.';
+    };
+    map.on('click', function (e) { put(e.lngLat); });
+    var go = function () {
+      var q = $('oFind').value.trim(); if (q.length < 2) return;
+      // Ola first; OpenStreetMap when Ola isn't answering (an area is enough to zoom in).
+      api('/places/autocomplete?q=' + encodeURIComponent(q)).catch(function () {
+        return fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=in&q=' + encodeURIComponent(q))
+          .then(function (r) { return r.json(); })
+          .then(function (list) { return { places: list.map(function (x) { return { lat: Number(x.lat), lng: Number(x.lon) }; }) }; });
+      }).then(function (r) {
+        var p = (r.places || [])[0];
+        if (!p) { $('oErr').textContent = 'Couldn’t find that area. Try the area and city.'; return; }
+        $('oErr').textContent = ''; map.flyTo({ center: [p.lng, p.lat], zoom: 16 });
+      }).catch(function (e) { $('oErr').textContent = e.message; });
+    };
+    $('oGo').onclick = go;
+    $('oFind').onkeydown = function (e) { if (e.key === 'Enter') go(); };
+    $('oNext').onclick = function () {
+      var name = $('oName').value.trim(), address = $('oAddr').value.trim();
+      if (name.length < 2) return ($('oErr').textContent = 'Add your restaurant’s name.');
+      if (address.length < 8) return ($('oErr').textContent = 'Add the full address.');
+      if (!pin) return ($('oErr').textContent = 'Put the pin on the map.');
+      if (map.getZoom() < 14) return ($('oErr').textContent = 'Zoom in and put the pin on your door, so diners find you.');
+      claimForm({ name: name, address: address, lat: pin.lat, lng: pin.lng, unlisted: true });
+    };
+  }
+
+  function claimFromPage(key) {
+    app.innerHTML = '<p class="muted">Loading the place…</p>';
+    var parts = key.split('/');
+    api('/place-pages/' + encodeURIComponent(parts[0]) + '/' + encodeURIComponent(parts[1] || '')).then(function (d) {
+      if (d.official) { app.innerHTML = '<div class="card"><h2>' + esc(d.place.name) + ' is already claimed</h2><p class="muted">If it’s yours, write to <a href="mailto:support@spotogo.in">support@spotogo.in</a>.</p><a class="btn" href="#">Back</a></div>'; return; }
+      claimForm({ name: d.place.name, address: d.place.address, lat: d.place.lat, lng: d.place.lng }, d);
+    }).catch(fail);
+  }
+
+  function claimForm(place, page) {
+    var role = 'Owner';
+    app.innerHTML = '<a class="back" href="#">← Your restaurants</a><div class="cols"><div class="card"><h2>Claim ' + esc(place.name) + '</h2><p class="muted">' + esc(place.address) + '</p>' +
+      '<div id="demand"></div>' +
+      '<h3>Your role</h3><div class="seg" id="roles">' + ['Owner', 'Manager', 'Staff'].map(function (x) { return '<button data-role="' + x + '"' + (x === role ? ' class="on"' : '') + '>' + x + '</button>'; }).join('') + '</div>' +
+      '<div class="form" style="margin-top:12px">' +
+      '<label>Phone we can reach you on<input id="cPhone" type="tel" placeholder="+91 98xxx xxxxx" /></label>' +
+      '<label>GST number (GSTIN)<input id="cGst" maxlength="18" placeholder="27AAPFU0939F1ZV" style="text-transform:uppercase;font-family:monospace;letter-spacing:1px" /></label>' +
+      '<label class="wide">Anything that helps us check (optional)<textarea id="cNote" rows="3" maxlength="300" placeholder="e.g. We opened in 2019. Our Instagram is @konkankatta."></textarea></label></div>' +
+      '<div id="gstErr" class="err"></div>' +
+      '<p><button id="sendClaim" class="btn primary">Send claim</button></p>' +
+      '<p class="muted">We check the GST number on the GST portal: the trade name and address should match this restaurant.</p></div>' +
+      '<div class="card"><h2>After we approve it</h2><p>You get an official page with your exact pin, hours and links; a <b>Today’s specials</b> box that reaches everyone who saved you; totals of how many saved you and went (never who); and a QR sticker for your counter.</p></div></div>';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-role]'), function (b) {
+      b.onclick = function () { role = b.getAttribute('data-role'); Array.prototype.forEach.call(document.querySelectorAll('[data-role]'), function (x) { x.className = x === b ? 'on' : ''; }); };
+    });
+    // Demand already waiting for them.
+    var showDemand = function (count, page) {
+      var bits = [];
+      if (page && page.diners && page.diners.saves) bits.push('<b>' + n(page.diners.saves) + '</b> ' + (page.diners.saves === 1 ? 'person has' : 'people have') + ' saved ' + esc(place.name) + ' on SpotoGo.');
+      if (count) bits.push('<b>' + n(count) + '</b> ' + (count === 1 ? 'person has' : 'people have') + ' asked you to post today’s specials.');
+      if (bits.length) $('demand').innerHTML = '<div class="demand">' + bits.join('<br>') + '</div>';
+    };
+    if (page) showDemand(page.asks || 0, page);
+    else if (!place.unlisted) api('/places/asks?name=' + encodeURIComponent(place.name) + '&lat=' + place.lat + '&lng=' + place.lng).then(function (a) {
+      if (a.official) { $('sendClaim').disabled = true; $('gstErr').textContent = 'This restaurant is already claimed. Write to support@spotogo.in if it’s yours.'; return; }
+      showDemand(a.count);
+    }).catch(function () {});
+    $('cGst').oninput = function () {
+      var g = $('cGst').value.toUpperCase().replace(/[^0-9A-Z]/g, '');
+      $('gstErr').textContent = g.length >= 15 ? (gstinProblem(g) || '') : '';
+    };
+    $('sendClaim').onclick = function () {
+      var g = $('cGst').value.toUpperCase().replace(/[^0-9A-Z]/g, '');
+      var problem = gstinProblem(g);
+      if (!$('cPhone').value.trim()) problem = 'Add a phone number we can reach you on.';
+      if (problem) { $('gstErr').textContent = problem; return; }
+      $('sendClaim').disabled = true;
+      api('/me/restaurant-claims', { body: { name: place.name, address: place.address, lat: place.lat, lng: place.lng, role: role, contact: $('cPhone').value.trim(), gstin: g, note: $('cNote').value.trim(), unlisted: place.unlisted === true } })
+        .then(function () {
+          app.innerHTML = '<div class="card" style="max-width:600px;margin:6vh auto;text-align:center"><h2>Claim sent</h2><p>We’ll check ' + esc(place.name) + '’s GST number and email you when it’s approved, usually within a day.</p><a class="btn primary" href="#">Done</a></div>';
+          history.replaceState(null, '', location.pathname + (LOCAL ? '?api=' + LOCAL : ''));
+        })
+        .catch(function (e) { $('gstErr').textContent = e.message; $('sendClaim').disabled = false; });
+    };
+  }
+
+  // ---------- Manage ----------
+  function manage(id) {
+    app.innerHTML = '<p class="muted">Loading…</p>';
+    Promise.all([api('/me/restaurants'), api('/me/restaurants/' + encodeURIComponent(id) + '/insights')]).then(function (res) {
+      var r = res[0].restaurants.filter(function (x) { return x.id === id; })[0];
+      if (!r) return fail(new Error('That restaurant isn’t yours.'));
+      var ins = res[1].insights;
+      var d = r.details || {};
+      var pageUrl = 'https://spotogo.in' + r.pagePath;
+      var sp = (d.specials && d.specials.items) || [];
+      var h = '<a class="back" href="#">← Your restaurants</a><div class="row" style="margin-bottom:12px"><h2 style="margin:0;font-size:22px;flex:1">' + esc(r.name) + '</h2><a class="btn" href="' + esc(pageUrl) + '" target="_blank" rel="noopener">See your page</a></div>';
+      h += '<div class="cols"><div class="stack">';
+
+      // Today's specials
+      h += '<div class="card"><h2>Today’s specials</h2><p class="muted">Up to 3 dishes. The first post of the day goes to the phone of everyone who saved you. They disappear at midnight.</p>';
+      for (var i = 0; i < 3; i++) {
+        h += '<div class="row" style="margin-top:8px"><input id="sp' + i + '" placeholder="Dish ' + (i + 1) + '" maxlength="48" value="' + esc((sp[i] || {}).name || '') + '" /><input id="spp' + i + '" placeholder="Price" maxlength="12" style="max-width:120px;flex:none" value="' + esc((sp[i] || {}).price || '') + '" /></div>';
+      }
+      h += '<p class="row" style="margin-top:10px"><button id="postSp" class="btn primary">' + (sp.length ? 'Update' : 'Post for today') + '</button>' + (sp.length ? '<button id="downSp" class="btn">Take down</button>' : '') + '<span id="spMsg" class="ok"></span></p></div>';
+
+      // Right now
+      h += '<div class="card"><h2>Right now</h2><div class="seg" id="state">' +
+        [['', 'Open as usual'], ['temp', 'Closed for now'], ['closed', 'Closed for good']].map(function (x) { return '<button data-st="' + x[0] + '" class="' + ((d.closed || '') === x[0] ? 'on' + (x[0] === 'closed' ? ' bad' : '') : '') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+        '<label id="untilLabel" style="margin-top:10px;max-width:260px"' + (d.closed === 'temp' ? '' : ' hidden') + '>Reopening on (optional)<input id="until" type="date" value="' + (d.closedUntil ? new Date(d.closedUntil).toISOString().slice(0, 10) : '') + '" /></label>' +
+        '<p class="muted">Closing tells everyone who saved you, with a phone alert.</p></div>';
+
+      // Details
+      var sig = d.signatures || [];
+      h += '<div class="card"><h2>Your details</h2><div class="form">' +
+        '<label class="wide">Opening hours<input id="hours" maxlength="120" placeholder="12 pm – 11:30 pm" value="' + esc(d.hours || '') + '" /></label>' +
+        '<label>Phone<input id="phone" maxlength="24" value="' + esc(d.phone || '') + '" /></label>' +
+        '<label>WhatsApp<input id="whatsapp" maxlength="24" value="' + esc(d.whatsapp || '') + '" /></label>' +
+        '<label>Instagram<input id="instagram" maxlength="40" placeholder="yourrestaurant" value="' + esc(d.instagram || '') + '" /></label>' +
+        '<label>Price<select id="price"><option value="">Not set</option>' + [1, 2, 3, 4].map(function (p) { return '<option value="' + p + '"' + (d.price === p ? ' selected' : '') + '>' + '₹'.repeat(p) + '</option>'; }).join('') + '</select></label>' +
+        '<label>Website (https://)<input id="website" maxlength="300" value="' + esc(d.website || '') + '" /></label>' +
+        '<label>Booking link (https://)<input id="reserveUrl" maxlength="300" value="' + esc(d.reserveUrl || '') + '" /></label>' +
+        '<label class="wide">Cuisines (up to 6, separated by commas)<input id="cuisines" maxlength="160" placeholder="Malvani, Seafood" value="' + esc((d.cuisines || []).join(', ')) + '" /></label></div>' +
+        '<h3>Our signatures</h3><p class="muted">Up to 6 dishes you’re known for, with prices.</p>';
+      for (var j = 0; j < 6; j++) h += '<div class="row" style="margin-top:6px"><input id="sg' + j + '" maxlength="48" placeholder="Signature dish ' + (j + 1) + '" value="' + esc((sig[j] || {}).name || '') + '" /><input id="sgp' + j + '" maxlength="12" placeholder="Price" style="max-width:120px;flex:none" value="' + esc((sig[j] || {}).price || '') + '" /></div>';
+      h += '<p class="row" style="margin-top:12px"><button id="saveDetails" class="btn primary">Save details</button><span id="detMsg" class="ok"></span></p><div id="detErr" class="err"></div></div>';
+      h += '</div><div class="stack">';
+
+      // Insights
+      h += '<div class="card"><h2>How diners find you</h2><div class="tiles">' +
+        '<div class="tile"><b>' + n(ins.saves) + '</b><span>saved you</span></div><div class="tile"><b>' + n(ins.been) + '</b><span>have been</span></div><div class="tile"><b>' + (ins.rating == null ? '–' : ins.rating) + '</b><span>' + (ins.rating == null ? 'no ratings yet' : 'avg of ' + ins.ratings) + '</span></div></div>' +
+        '<p class="muted" style="margin-top:8px">Last 30 days: ' + n(ins.last30.saves) + ' new saves, ' + n(ins.last30.been) + ' visits. This week: ' + n(ins.week ? ins.week.saves : 0) + ' saves, ' + n(ins.week ? ins.week.been : 0) + ' visits.</p>' +
+        (ins.dishes.length ? '<h3>What diners order</h3><ul class="menu">' + ins.dishes.map(function (x) { return '<li><b>' + esc(x.name) + '</b><span class="dots"></span><span class="rt">' + (x.rating == null ? '' : x.rating) + '</span><span class="muted">' + x.count + '×</span></li>'; }).join('') + '</ul>' : '') +
+        (ins.reels.length ? '<h3>Reels that brought people</h3>' + ins.reels.map(function (x) { return '<div class="item"><div class="main"><b>' + esc(x.handle ? '@' + x.handle : (x.name || 'A reel')) + '</b><span class="muted">' + n(x.saves) + ' saves</span></div></div>'; }).join('') : '') +
+        '<p class="muted">Totals only: SpotoGo never shows who saved you.</p></div>';
+
+      // Name: rename, saves under other names, what diners say.
+      h += '<div class="card" id="nameCard"><h2>Your name</h2><p class="muted">Loading…</p></div>';
+
+      // Page, sticker, story card
+      h += '<div class="card"><h2>Your page and QR sticker</h2><p class="muted">Your page shows up on Google. Put the QR on your counter or window: diners scan it and save you.</p>' +
+        '<div class="row"><input readonly value="' + esc(pageUrl) + '" id="pageUrl" /><button id="copyUrl" class="btn small">Copy</button></div>' +
+        '<p class="row" style="margin-top:10px"><a class="btn primary" href="' + esc(pageUrl) + '/kit" target="_blank" rel="noopener">Sticker and story card</a><button id="mailKit" class="btn dark">Email them to me</button></p><span id="kitMsg" class="ok"></span><div id="kitErr" class="err"></div></div>';
+
+      // Weekly email
+      h += '<div class="card"><h2>Monday email</h2><label class="switch"><input type="checkbox" id="weekly"' + (r.weeklyEmail !== false ? ' checked' : '') + ' />Send me my week every Monday (new saves, visits, top dish, reels)</label></div>';
+      h += '</div></div>';
+      app.innerHTML = h;
+
+      var specialsOf = function () { var out = []; for (var i = 0; i < 3; i++) { var nm = $('sp' + i).value.trim(); if (nm) out.push({ name: nm, price: $('spp' + i).value.trim() || undefined }); } return out; };
+      var postSp = function (items) {
+        $('postSp').disabled = true;
+        api('/me/restaurants/' + encodeURIComponent(id) + '/specials', { method: 'PUT', body: { items: items } }).then(function (res) {
+          $('spMsg').textContent = !items.length ? 'Taken down.' : res.alerted ? 'Posted. We sent a phone alert to ' + res.alerted + ' ' + (res.alerted === 1 ? 'person' : 'people') + '.' : 'Posted for today.';
+          setTimeout(function () { manage(id); }, 1600);
+        }).catch(function (e) { $('spMsg').textContent = ''; alert(e.message); $('postSp').disabled = false; });
+      };
+      $('postSp').onclick = function () { var it = specialsOf(); if (!it.length) return alert('Add at least one dish.'); postSp(it); };
+      if ($('downSp')) $('downSp').onclick = function () { if (confirm('Take today’s specials down?')) postSp([]); };
+
+      var state = d.closed || '';
+      Array.prototype.forEach.call(document.querySelectorAll('[data-st]'), function (b) {
+        b.onclick = function () {
+          state = b.getAttribute('data-st');
+          Array.prototype.forEach.call(document.querySelectorAll('[data-st]'), function (x) { x.className = x === b ? 'on' + (state === 'closed' ? ' bad' : '') : ''; });
+          $('untilLabel').hidden = state !== 'temp';
+          $('detMsg').textContent = 'Press Save details to apply.';
+        };
+      });
+
+      $('saveDetails').onclick = function () {
+        var sigs = []; for (var j = 0; j < 6; j++) { var nm = $('sg' + j).value.trim(); if (nm) sigs.push({ name: nm, price: $('sgp' + j).value.trim() || undefined }); }
+        var url = function (v) { v = v.trim(); return v && !/^https:\/\//i.test(v) ? 'https://' + v.replace(/^http:\/\//i, '') : v; };
+        var until = state === 'temp' && $('until').value ? new Date($('until').value + 'T12:00:00+05:30').getTime() : undefined;
+        var details = {
+          hours: $('hours').value, phone: $('phone').value, whatsapp: $('whatsapp').value, instagram: $('instagram').value,
+          website: url($('website').value), reserveUrl: url($('reserveUrl').value), price: Number($('price').value) || undefined,
+          cuisines: $('cuisines').value.split(',').map(function (x) { return x.trim(); }).filter(Boolean),
+          signatures: sigs, closed: state || undefined, closedUntil: until,
+        };
+        var before = d.closed || '';
+        if (state && state !== before && !confirm(state === 'closed' ? 'Mark ' + r.name + ' closed for good? Everyone who saved you gets a phone alert.' : 'Mark ' + r.name + ' closed for now? Everyone who saved you gets a phone alert.')) return;
+        $('saveDetails').disabled = true; $('detErr').textContent = '';
+        api('/me/restaurants/' + encodeURIComponent(id), { method: 'PUT', body: { details: details } }).then(function (res) {
+          d = res.restaurant.details || {}; $('detMsg').textContent = 'Saved.';
+        }).catch(function (e) { $('detErr').textContent = e.message; }).finally(function () { $('saveDetails').disabled = false; });
+      };
+
+      $('copyUrl').onclick = function () { (navigator.clipboard ? navigator.clipboard.writeText(pageUrl) : Promise.reject()).then(function () { $('copyUrl').textContent = 'Copied'; }).catch(function () { $('pageUrl').select(); }); };
+      $('weekly').onchange = function () {
+        api('/me/restaurants/' + encodeURIComponent(id) + '/weekly', { method: 'PUT', body: { on: $('weekly').checked } }).catch(function (e) { alert(e.message); });
+      };
+
+      loadNames(id, r);
+
+      // Draw the sticker and story card in a hidden copy of the kit page, then email both.
+      $('mailKit').onclick = function () {
+        $('mailKit').disabled = true; $('kitErr').textContent = ''; $('kitMsg').textContent = 'Preparing your sticker and story card…';
+        var f = $('kitFrame'), tries = 0;
+        f.onload = function () {
+          var wait = setInterval(function () {
+            var doc = f.contentDocument, img = doc && doc.getElementById('printImg');
+            if ((img && img.getAttribute('src')) || ++tries > 40) {
+              clearInterval(wait);
+              var grab = function (cid) { try { return doc.getElementById(cid).toDataURL('image/png'); } catch (e) { return undefined; } };
+              var body = img && img.getAttribute('src') ? { sticker: grab('sticker'), story: grab('story') } : {};
+              api('/me/restaurants/' + encodeURIComponent(id) + '/kit-email', { body: body }).then(function (res) {
+                $('kitMsg').textContent = res.sent ? 'Sent to ' + res.to + '.' : 'Email isn’t available right now.';
+              }).catch(function (e) { $('kitMsg').textContent = ''; $('kitErr').textContent = e.message; }).finally(function () { $('mailKit').disabled = false; });
+            }
+          }, 250);
+        };
+        f.src = r.pagePath + '/kit';
+      };
+    }).catch(fail);
+  }
+
+  function loadNames(id, r) {
+    api('/me/restaurants/' + encodeURIComponent(id) + '/names').then(function (x) {
+      var former = (x.aka || []).filter(function (a) { return a.renamed; }).map(function (a) { return a.name; });
+      var other = (x.aka || []).filter(function (a) { return !a.renamed; }).map(function (a) { return a.name; });
+      var h = '<h2>Your name</h2><p><b style="font-size:17px">' + esc(x.name) + '</b></p>' +
+        (former.length ? '<p class="muted">Formerly ' + former.map(esc).join(', ') + '. Saves under old names still count.</p>' : '') +
+        (other.length ? '<p class="muted">Saves under ' + other.map(function (n) { return '“' + esc(n) + '”'; }).join(', ') + ' count for you too.</p>' : '');
+      (x.pending || []).forEach(function (p) {
+        h += '<p class="note">Waiting for SpotoGo: ' + (p.kind === 'rename' ? 'rename to “' + esc(p.name) + '”' : 'count saves under “' + esc(p.name) + '”') + '</p>';
+      });
+      var sug = x.suggestions || { names: [], hours: [] };
+      if (sug.names.length || sug.hours.length) {
+        h += '<h3>Diners say</h3>';
+        sug.names.forEach(function (s) { h += '<span class="chip" data-renameto="' + esc(s.name) + '">You’re now called “' + esc(s.name) + '” · ' + s.people + '</span>'; });
+        sug.hours.forEach(function (s) { h += '<span class="chip" data-hours="' + esc(s.hours) + '">Open ' + esc(s.hours) + ' · ' + s.people + '</span>'; });
+        h += '<p class="muted">Tap one to use it.</p>';
+      }
+      h += '<h3>Changed your name?</h3><div class="row"><input id="newName" maxlength="80" placeholder="Your new name" /><button id="askRename" class="btn">Ask to rename</button></div>' +
+        '<p class="muted">We check it and change it for everyone. Saves under your old name keep counting.</p>';
+      if ((x.nearby || []).length) {
+        h += '<h3>Saved under another name?</h3><p class="muted">Diners saved these names right where you are. If one of them is you, we’ll count those saves for you.</p>';
+        x.nearby.forEach(function (n, i) {
+          h += '<div class="item"><div class="main"><b>' + esc(n.name) + '</b><span class="muted">' + n.saves + ' ' + (n.saves === 1 ? 'save' : 'saves') + '</span></div><button class="btn small" data-aka="' + i + '">That’s us</button></div>';
+        });
+      }
+      h += '<div id="nameMsg" class="ok"></div><div id="nameErr" class="err"></div>';
+      $('nameCard').innerHTML = h;
+      var ask = function (kind, name, btn) {
+        if (btn) btn.disabled = true;
+        api('/me/restaurants/' + encodeURIComponent(id) + '/names', { body: { kind: kind, name: name } }).then(function () {
+          $('nameMsg').textContent = 'Sent. We’ll email you when it’s done.'; setTimeout(function () { loadNames(id, r); }, 1500);
+        }).catch(function (e) { $('nameErr').textContent = e.message; if (btn) btn.disabled = false; });
+      };
+      $('askRename').onclick = function () { var v = $('newName').value.trim(); if (v) ask('rename', v, $('askRename')); };
+      Array.prototype.forEach.call(document.querySelectorAll('[data-aka]'), function (b) {
+        b.onclick = function () { var n = x.nearby[Number(b.getAttribute('data-aka'))]; if (confirm('Count the ' + n.saves + ' saves under “' + n.name + '” for ' + x.name + '?')) ask('aka', n.name, b); };
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-renameto]'), function (c) { c.onclick = function () { $('newName').value = c.getAttribute('data-renameto'); $('newName').focus(); }; });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-hours]'), function (c) {
+        c.onclick = function () { $('hours').value = c.getAttribute('data-hours'); $('hours').focus(); $('detMsg').textContent = 'Hours filled in. Press Save details.'; };
+      });
+    }).catch(function (e) { if ($('nameCard')) $('nameCard').innerHTML = '<h2>Your name</h2><p class="err">' + esc(e.message) + '</p>'; });
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>

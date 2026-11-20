@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Import your reels</title>
+<meta name="description" content="Verified SpotoGo creators: turn your Instagram reels into spots in one go, from your Instagram download." />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#FCFAF6" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  /* Import my reels, Instagram part (2026-11-20). A verified creator uploads their own Instagram
+     download; the page reads only the caption files out of it (the download can be gigabytes of
+     video, so the ZIP is never loaded whole) and sends the captions to the API (backend/src/imports.ts).
+     They review the spots in the app. */
+  :root {
+    --bg: #FCFAF6; --card: #FFFFFF; --text: #202120; --muted: #777C79; --border: #E3DED4;
+    --accent: #48B88C; --on-accent: #10291F; --hi: #2F9E74; --soft: #E4F4EC; --bad: #EF4444; --dark: #183C30;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; line-height: 1.5; font-size: 15px; }
+  header { border-bottom: 1px solid var(--border); }
+  .bar { max-width: 720px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+  .bar img { height: 28px; display: block; }
+  .bar h1 { font-size: 15px; margin: 0; flex: 1; font-weight: 800; }
+  main { max-width: 720px; margin: 0 auto; padding: 20px 16px 56px; display: grid; gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+  h2 { font-size: 22px; line-height: 1.25; margin: 0 0 6px; font-weight: 800; }
+  h3 { font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .8px; color: var(--hi); font-weight: 800; }
+  p { margin: 6px 0; }
+  .muted { color: var(--muted); font-size: 13.5px; }
+  .btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 999px; padding: 10px 18px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.small { padding: 6px 12px; font-size: 13px; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  input[type=email], input[inputmode] { width: 100%; height: 44px; border: 1px solid var(--border); border-radius: 10px; padding: 0 12px; font: inherit; background: var(--bg); color: var(--text); }
+  label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .login { display: grid; gap: 10px; max-width: 420px; }
+  ol { margin: 6px 0; padding-left: 20px; }
+  ol li { margin: 4px 0; }
+  .drop { border: 2px dashed var(--accent); border-radius: 14px; padding: 22px 16px; text-align: center; background: var(--soft); cursor: pointer; }
+  .drop.over { background: #d6efe2; }
+  .drop b { display: block; font-size: 16px; }
+  .err { color: var(--bad); font-size: 14px; min-height: 18px; }
+  .ok { color: var(--hi); font-weight: 700; }
+  .bar2 { height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; }
+  .bar2 i { display: block; height: 100%; background: var(--accent); width: 0; }
+  .post { border-top: 1px solid var(--border); padding: 8px 0; font-size: 13.5px; white-space: pre-line; overflow-wrap: anywhere; }
+  .post:first-of-type { border-top: 0; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  a { color: var(--hi); }
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <a href="/"><img src="/logo.png" alt="SpotoGo" /></a>
+  <h1>Import your reels</h1>
+  <button id="logout" class="btn small" hidden>Log out</button>
+</div></header>
+<main id="app"><p class="muted">Loading…</p></main>
+
+<script>
+(function () {
+  // ?api=http://localhost:8787 points the page at a local server (local tests only).
+  var LOCAL = new URLSearchParams(location.search).get('api');
+  var API = LOCAL && /^http:\/\/localhost:\d+$/.test(LOCAL) ? LOCAL : 'https://api.spotogo.in';
+  var KEY = 'spotogo.import.session';
+  var MAX = 1500;
+  var session = null;
+  try { session = localStorage.getItem(KEY); } catch (e) {}
+  var $ = function (id) { return document.getElementById(id); };
+  var app = $('app');
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var n = function (x) { return Number(x || 0).toLocaleString('en-IN'); };
+
+  function api(path, opts) {
+    opts = opts || {};
+    return fetch(API + path, {
+      method: opts.method || (opts.body ? 'POST' : 'GET'),
+      headers: Object.assign({ 'content-type': 'application/json' }, session ? { authorization: 'Bearer ' + session } : {}),
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) { var e = new Error(j.error || ('Error ' + r.status)); e.status = r.status; throw e; }
+        return j;
+      });
+    });
+  }
+  function logout(msg) { session = null; try { localStorage.removeItem(KEY); } catch (e) {} showLogin(msg); }
+  $('logout').onclick = function () { logout(); };
+
+  // ---------- Sign in (the email of your SpotoGo account) ----------
+  function showLogin(msg) {
+    $('logout').hidden = true;
+    app.innerHTML =
+      '<div class="card"><h2>Your Instagram reels, as spots</h2>' +
+      '<p class="muted">For verified SpotoGo creators. Upload your Instagram download and SpotoGo finds the places in your posts. You check each one in the app before anything goes on your profile.</p></div>' +
+      '<div class="card login"><label>The email of your SpotoGo account<input id="email" type="email" autocomplete="email" placeholder="you@gmail.com" /></label>' +
+      '<p class="muted">If you sign in to SpotoGo with Google, use that Google email.</p>' +
+      '<button id="send" class="btn primary">Send me a code</button>' +
+      '<label id="codeLabel" hidden>6-digit code from the email<input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" /></label>' +
+      '<button id="verify" class="btn primary" hidden>Sign in</button>' +
+      '<div id="loginErr" class="err">' + esc(msg || '') + '</div></div>';
+    $('send').onclick = function () {
+      var email = $('email').value.trim(); if (!email) return;
+      $('send').disabled = true; $('loginErr').textContent = '';
+      api('/auth/email/start', { body: { email: email } }).then(function () {
+        $('codeLabel').hidden = false; $('verify').hidden = false; $('code').focus(); $('send').textContent = 'Send again';
+      }).catch(function (e) { $('loginErr').textContent = e.message; }).finally(function () { $('send').disabled = false; });
+    };
+    $('email').onkeydown = function (e) { if (e.key === 'Enter') $('send').click(); };
+    $('code').onkeydown = function (e) { if (e.key === 'Enter') $('verify').click(); };
+    $('verify').onclick = function () {
+      $('verify').disabled = true; $('loginErr').textContent = '';
+      api('/auth/email/verify', { body: { email: $('email').value.trim(), code: $('code').value.trim() } }).then(function (r) {
+        session = r.session; try { localStorage.setItem(KEY, session); } catch (e) {}
+        start();
+      }).catch(function (e) { $('loginErr').textContent = e.message; }).finally(function () { $('verify').disabled = false; });
+    };
+  }
+
+  var sources = null;
+  function start() {
+    if (!session) return showLogin();
+    api('/me/imports').then(function (r) {
+      sources = r.sources;
+      if (!sources.verified) return logout('Importing reels is for verified creators. Ask for verification in the SpotoGo app (Account → Get verified), then come back.');
+      $('logout').hidden = false;
+      showUpload(r.imports);
+    }).catch(function (e) {
+      if (e.status === 401 || e.status === 403) return logout(e.status === 403 ? e.message : '');
+      app.innerHTML = '<div class="card"><p class="err">' + esc(e.message) + '</p></div>';
+    });
+  }
+
+  // ---------- Upload ----------
+  function showUpload(imports) {
+    var mine = (imports || []).filter(function (i) { return i.source === 'instagram'; });
+    var last = mine[0];
+    app.innerHTML =
+      (last ? '<div class="card"><h3>Your last Instagram import</h3>' + importLine(last) + '</div>' : '') +
+      '<div class="card"><h3>1 · Get your Instagram download</h3><ol>' +
+      '<li>In Instagram, open <b>Settings</b> → <b>Accounts Center</b> → <b>Your information and permissions</b> → <b>Download your information</b>.</li>' +
+      '<li>Pick <b>Download or transfer information</b>, your account, then <b>Some of your information</b>: tick <b>Content</b> (posts and reels).</li>' +
+      '<li>Choose <b>Download to device</b>, <b>Format: JSON</b>, <b>Date range: All time</b>, media quality <b>Low</b> (smaller file).</li>' +
+      '<li>Instagram emails you when it’s ready (minutes to a day). Download the ZIP.</li></ol></div>' +
+      '<div class="card"><h3>2 · Upload it here</h3>' +
+      '<label class="drop" id="drop"><b>Choose your Instagram ZIP</b><span class="muted">or drop it here. You can also pick the posts / reels .json files from it.</span>' +
+      '<input id="file" type="file" accept=".zip,.json,application/zip,application/json" multiple hidden /></label>' +
+      '<p class="muted">Your photos and videos aren’t uploaded.</p>' +
+      '<div id="status" class="err"></div><div id="preview"></div></div>';
+    var drop = $('drop');
+    $('file').onchange = function () { readFiles([].slice.call(this.files || [])); };
+    drop.ondragover = function (e) { e.preventDefault(); drop.classList.add('over'); };
+    drop.ondragleave = function () { drop.classList.remove('over'); };
+    drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove('over'); readFiles([].slice.call(e.dataTransfer.files || [])); };
+  }
+
+  function importLine(i) {
+    var c = i.counts || {};
+    var read = i.total - i.left;
+    return '<p><b>' + n(i.total) + ' posts</b> · ' + n(read) + ' read · ' + n(i.toReview) + ' to review · ' + n(c.saved) + ' saved</p>' +
+      '<div class="bar2"><i style="width:' + (i.total ? Math.round((read / i.total) * 100) : 0) + '%"></i></div>' +
+      '<p class="muted">' + (i.left ? 'SpotoGo is still reading them. You can close this page.' : 'All read.') +
+      ' Review them in the app: <b>Account → Import my reels</b>.</p>';
+  }
+
+  // ---------- Reading the download ----------
+  function status(t, bad) { var s = $('status'); s.className = bad ? 'err' : 'muted'; s.textContent = t; }
+
+  function readFiles(files) {
+    if (!files.length) return;
+    $('preview').innerHTML = '';
+    status('Reading your download…');
+    var texts = [];
+    var html = false;
+    var chain = Promise.resolve();
+    files.forEach(function (f) {
+      chain = chain.then(function () {
+        if (/\.json$/i.test(f.name)) return f.text().then(function (t) { texts.push(t); });
+        if (/\.html?$/i.test(f.name)) { html = true; return; }
+        return zipJsonFiles(f).then(function (r) { texts.push.apply(texts, r.texts); html = html || r.html; });
+      });
+    });
+    chain.then(function () {
+      var posts = postsFrom(texts);
+      if (!posts.length) {
+        return status(html
+          ? 'This download is in HTML. Ask Instagram for it again with Format: JSON.'
+          : 'We couldn’t find any posts in it. Make sure “Content” (posts and reels) was ticked.', true);
+      }
+      showPreview(posts);
+    }).catch(function (e) { status('We couldn’t read that file: ' + (e && e.message ? e.message : e), true); });
+  }
+
+  // A ZIP's table of contents is at its end: read that, then only the .json files about posts and reels.
+  function zipJsonFiles(file) {
+    var size = file.size;
+    var tailLen = Math.min(size, 66000 + 22);
+    return file.slice(size - tailLen).arrayBuffer().then(function (buf) {
+      var v = new DataView(buf);
+      var eocd = -1;
+      for (var i = buf.byteLength - 22; i >= 0; i--) if (v.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+      if (eocd < 0) throw new Error('not a ZIP file');
+      var count = v.getUint16(eocd + 10, true);
+      var cdSize = v.getUint32(eocd + 12, true);
+      var cdOff = v.getUint32(eocd + 16, true);
+      var zip64 = cdOff === 0xffffffff || count === 0xffff;
+      var findCd = zip64 ? zip64Directory(file, size - tailLen, v, eocd) : Promise.resolve({ off: cdOff, size: cdSize });
+      return findCd.then(function (cd) { return file.slice(cd.off, cd.off + cd.size).arrayBuffer(); });
+    }).then(function (cdBuf) {
+      var v = new DataView(cdBuf);
+      var wanted = [];
+      var html = false;
+      var dec = new TextDecoder();
+      for (var p = 0; p + 46 <= cdBuf.byteLength && v.getUint32(p, true) === 0x02014b50; ) {
+        var method = v.getUint16(p + 10, true);
+        var csize = v.getUint32(p + 20, true);
+        var nameLen = v.getUint16(p + 28, true), extraLen = v.getUint16(p + 30, true), commentLen = v.getUint16(p + 32, true);
+        var local = v.getUint32(p + 42, true);
+        var name = dec.decode(new Uint8Array(cdBuf, p + 46, nameLen));
+        if (csize === 0xffffffff || local === 0xffffffff) {
+          // ZIP64 sizes and offsets live in the extra field.
+          var e = p + 46 + nameLen, end = e + extraLen;
+          while (e + 4 <= end) {
+            var id = v.getUint16(e, true), len = v.getUint16(e + 2, true), q = e + 4;
+            if (id === 1) {
+              if (v.getUint32(p + 24, true) === 0xffffffff) q += 8; // uncompressed size
+              if (csize === 0xffffffff) { csize = Number(v.getBigUint64(q, true)); q += 8; }
+              if (local === 0xffffffff) { local = Number(v.getBigUint64(q, true)); }
+            }
+            e += 4 + len;
+          }
+        }
+        // Posts and reels: content/posts_1.json, content/reels.json, … (not messages or other activity).
+        if (/(^|\/)content\/[^/]*\.json$/i.test(name) || /(^|\/)(posts_\d+|reels|igtv_videos)\.json$/i.test(name)) wanted.push({ method: method, csize: csize, local: local });
+        if (/(^|\/)content\/[^/]*\.html$/i.test(name)) html = true;
+        p += 46 + nameLen + extraLen + commentLen;
+      }
+      return Promise.all(wanted.map(function (w) { return entryText(file, w); })).then(function (texts) { return { texts: texts, html: html }; });
+    });
+  }
+  function zip64Directory(file, tailStart, v, eocd) {
+    var loc = eocd - 20;
+    if (loc < 0 || v.getUint32(loc, true) !== 0x07064b50) return Promise.reject(new Error('unreadable ZIP'));
+    var recOff = Number(v.getBigUint64(loc + 8, true));
+    return file.slice(recOff, recOff + 56).arrayBuffer().then(function (b) {
+      var r = new DataView(b);
+      if (r.getUint32(0, true) !== 0x06064b50) throw new Error('unreadable ZIP');
+      return { size: Number(r.getBigUint64(40, true)), off: Number(r.getBigUint64(48, true)) };
+    });
+  }
+  function entryText(file, w) {
+    return file.slice(w.local, w.local + 30).arrayBuffer().then(function (h) {
+      var v = new DataView(h);
+      var start = w.local + 30 + v.getUint16(26, true) + v.getUint16(28, true);
+      var blob = file.slice(start, start + w.csize);
+      if (w.method === 0) return blob.text();
+      if (w.method !== 8) throw new Error('unsupported ZIP compression');
+      return new Response(blob.stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+    });
+  }
+
+  // Instagram writes UTF-8 text as if each byte were a character ("Ã°ÂŸÂ“Â" for 📍): put it back.
+  function fixText(s) {
+    try { return decodeURIComponent(escape(s)); } catch (e) { return s; }
+  }
+  // Every object with a caption ("title") and a time ("creation_timestamp"), wherever it sits.
+  function postsFrom(texts) {
+    var out = [];
+    var seen = {};
+    function walk(x, depth) {
+      if (!x || depth > 8) return;
+      if (Array.isArray(x)) { x.forEach(function (y) { walk(y, depth + 1); }); return; }
+      if (typeof x !== 'object') return;
+      if (typeof x.title === 'string' && typeof x.creation_timestamp === 'number') {
+        var caption = fixText(x.title).trim();
+        var key = caption.slice(0, 200) + '|' + Math.round(x.creation_timestamp / 3600);
+        if (caption.length >= 8 && !seen[key]) {
+          seen[key] = true;
+          var link = JSON.stringify(x).match(/https:\/\/www\.instagram\.com\/(?:p|reel|reels)\/[A-Za-z0-9_-]+\/?/);
+          out.push({ caption: caption.slice(0, 5000), takenAt: x.creation_timestamp * 1000, url: link ? link[0] : undefined });
+        }
+      }
+      for (var k in x) if (k !== 'title') walk(x[k], depth + 1);
+    }
+    texts.forEach(function (t) { try { walk(JSON.parse(t), 0); } catch (e) {} });
+    out.sort(function (a, b) { return b.takenAt - a.takenAt; });
+    return out;
+  }
+
+  function showPreview(posts) {
+    var take = posts.slice(0, MAX);
+    status('');
+    $('preview').innerHTML =
+      '<p class="ok">Found ' + n(posts.length) + ' posts' + (posts.length > MAX ? ' (the newest ' + n(MAX) + ' will be imported)' : '') + '.</p>' +
+      '<div class="card" style="padding:10px 14px">' + take.slice(0, 4).map(function (p) {
+        return '<div class="post"><span class="muted">' + new Date(p.takenAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) + '</span>\n' + esc(p.caption.slice(0, 220)) + (p.caption.length > 220 ? '…' : '') + '</div>';
+      }).join('') + '</div>' +
+      '<div class="row" style="margin-top:12px"><button id="go" class="btn primary">Import ' + n(take.length) + ' posts</button><span id="goErr" class="err"></span></div>';
+    $('go').onclick = function () {
+      $('go').disabled = true; $('goErr').textContent = '';
+      api('/me/imports', { body: { source: 'instagram', posts: take } }).then(function (r) {
+        $('preview').innerHTML = '<div class="card" style="border-color:var(--accent)"><p class="ok">Imported. SpotoGo is reading them now.</p>' + importLine(r.import) +
+          '<p><a class="btn primary" href="spotogo://imports">Open SpotoGo to review</a></p></div>';
+      }).catch(function (e) { $('goErr').textContent = e.message; $('go').disabled = false; });
+    };
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>

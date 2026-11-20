@@ -23,54 +23,84 @@
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; line-height: 1.45; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; line-height: 1.4; font-size: 14px; }
   header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); }
-  .bar { max-width: 1180px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
-  .bar img { height: 30px; }
-  .bar h1 { font-size: 17px; margin: 0; flex: 1; font-weight: 800; }
-  .btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 999px; padding: 8px 16px; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .bar { max-width: 1240px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+  .bar img { height: 26px; display: block; }
+  .bar h1 { font-size: 15px; margin: 0; flex: 1; font-weight: 800; }
+  .btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 999px; padding: 5px 12px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .btn.danger { color: var(--bad); border-color: var(--bad); }
   .btn:disabled { opacity: .5; cursor: default; }
-  main { max-width: 1180px; margin: 0 auto; padding: 16px; }
-  .muted { color: var(--muted); font-size: 13px; }
-  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
-  .cols { display: grid; gap: 16px; grid-template-columns: 1fr; }
-  @media (min-width: 900px) { .cols { grid-template-columns: 1.1fr 1fr; } }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
-  .stat .v { font-size: 26px; font-weight: 800; color: var(--hi); }
-  .stat .v.plain { color: var(--text); font-size: 22px; }
-  .stat .l { font-size: 13px; color: var(--muted); }
-  .stat .s { font-size: 12px; color: var(--faint); }
-  h2 { font-size: 17px; margin: 26px 0 10px; display: flex; align-items: center; gap: 8px; }
-  h2 .count { background: var(--accent); color: var(--on-accent); border-radius: 999px; font-size: 12px; padding: 2px 9px; }
-  .alert { border: 1.5px solid var(--warn); border-radius: 12px; padding: 10px 14px; margin: 8px 0; font-size: 14px; background: var(--card); }
-  .item { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); }
-  .item:first-child { border-top: 0; }
-  .item .main { flex: 1; min-width: 0; }
-  .item b { display: block; }
-  .tag { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--hi); }
-  .meter { height: 10px; border-radius: 5px; background: var(--soft); overflow: hidden; margin: 8px 0 6px; }
-  .meter > div { height: 100%; border-radius: 5px; }
-  .chart { display: flex; align-items: flex-end; gap: 6px; height: 140px; margin-top: 12px; }
+  main { max-width: 1240px; margin: 0 auto; padding: 12px 16px 40px; }
+  .muted { color: var(--muted); font-size: 12.5px; }
+  p.muted { margin: 6px 0; }
+  /* Layout: a row of headline numbers, then two columns of cards. */
+  .kpis { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (min-width: 900px) { .kpis { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+  @media (max-width: 420px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { #who { display: none; } .bar h1 { font-size: 14px; } }
+  .cols { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); margin-top: 12px; align-items: start; }
+  @media (min-width: 960px) { .cols { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); } }
+  .stack { display: grid; gap: 12px; min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+  .card > h2:first-child { margin-top: 0; }
+  .tiles { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 520px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; min-width: 0; }
+  .tiles .stat { background: var(--bg); }
+  .stat .v { font-size: 20px; font-weight: 800; color: var(--hi); line-height: 1.2; }
+  .stat .v.plain { color: var(--text); }
+  .stat .l { font-size: 12px; color: var(--muted); }
+  .stat .s { font-size: 11px; color: var(--faint); }
+  h2 { font-size: 14px; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; font-weight: 800; }
+  h2 .count { background: var(--accent); color: var(--on-accent); border-radius: 999px; font-size: 11px; padding: 1px 8px; }
+  h3 { font-size: 12px; margin: 0 0 6px; text-transform: uppercase; letter-spacing: .8px; color: var(--hi); font-weight: 800; }
+  .alert { border: 1.5px solid var(--warn); border-radius: 10px; padding: 7px 12px; margin: 0 0 10px; font-size: 13px; background: var(--card); }
+  .item { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); }
+  .item:first-child, h2 + .item, h3 + .item, .muted + .item { border-top: 0; }
+  .item .main { flex: 1 1 240px; min-width: 0; }
+  .item .main > span, .item .main > b, .item .main > a { display: block; overflow-wrap: anywhere; }
+  .acts { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .tag { font-size: 10.5px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--hi); }
+  .meter { height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; margin: 6px 0 4px; }
+  .meter > div { height: 100%; border-radius: 4px; }
+  .lim + .lim { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .chart { display: flex; align-items: flex-end; gap: 4px; height: 90px; margin-top: 8px; }
   .chart .col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
-  .chart .b { width: 100%; border-radius: 4px 4px 0 0; background: var(--accent); min-height: 2px; }
-  .chart .d { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--text); }
-  .chart .x { font-size: 10px; color: var(--faint); margin-top: 4px; }
-  input { width: 100%; height: 44px; border: 1px solid var(--border); border-radius: 12px; padding: 0 12px; font: inherit; font-size: 15px; background: var(--card); color: var(--text); }
-  .login { max-width: 380px; margin: 12vh auto; text-align: center; }
+  .chart .b { width: 100%; border-radius: 3px 3px 0 0; background: var(--accent); min-height: 2px; }
+  .chart .d { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--text); }
+  .chart .x { font-size: 9.5px; color: var(--faint); margin-top: 3px; }
+  input, select { height: 32px; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; font: inherit; font-size: 13px; background: var(--bg); color: var(--text); min-width: 0; }
+  input { width: 100%; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row input[type=number] { width: 84px; }
+  .form { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); align-items: end; }
+  .form label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+  .form .wide { grid-column: span 2; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 2px; gap: 2px; }
+  .seg .btn { border: 0; }
+  .split { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+  .split > div + div { border-top: 1px solid var(--border); padding-top: 12px; }
+  .code { font-family: ui-monospace, Consolas, monospace; letter-spacing: .5px; font-size: 13px; }
+  .more { margin-top: 6px; }
+  .login { max-width: 360px; margin: 12vh auto; text-align: center; }
   .login .card { text-align: left; display: grid; gap: 10px; }
-  .err { color: var(--bad); font-size: 14px; min-height: 20px; }
+  .login input { height: 40px; font-size: 15px; }
+  .err { color: var(--bad); font-size: 13px; min-height: 18px; }
   a { color: var(--hi); }
-  dialog { border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: var(--text); max-width: 420px; }
+  dialog { border: 1px solid var(--border); border-radius: 14px; background: var(--card); color: var(--text); max-width: 420px; }
   dialog::backdrop { background: rgba(0,0,0,.35); }
-.item .main > span { display: block; }
-.person{border-bottom:1px solid #E3DED4;padding-bottom:6px;margin-bottom:6px}.person:last-child{border:0}.sub{padding-left:14px}.ok{color:#2F9E74;font-size:13px;font-weight:600}.warn{color:#B7791F;font-size:13px;font-weight:600}
+  .person { border-top: 1px solid var(--border); padding-top: 4px; margin-top: 4px; }
+  .person:first-child { border: 0; }
+  .sub { padding-left: 12px; }
+  .ok { color: var(--hi); font-size: 12px; font-weight: 700; }
+  .warn { color: var(--warn); font-size: 12px; font-weight: 700; }
 </style>
 </head>
 <body>
 <header><div class="bar">
-  <img src="../logo.png" alt="SpotoGo" />
+  <picture><source srcset="../logo-dark.png" media="(prefers-color-scheme: dark)" /><img src="../logo.png" alt="SpotoGo" /></picture>
   <h1>Founder dashboard</h1>
   <span id="who" class="muted"></span>
   <button id="refresh" class="btn" hidden>Refresh</button>
@@ -107,9 +137,9 @@
   var n = function (x) { return Number(x || 0).toLocaleString('en-IN'); };
   var ago = function (ms) { var m = Math.round((Date.now() - ms) / 60000); if (m < 60) return m + ' min ago'; var h = Math.round(m / 60); return h < 48 ? h + ' h ago' : Math.round(h / 24) + ' days ago'; };
 
-  function api(path, body) {
+  function api(path, body, method) {
     return fetch(API + path, {
-      method: body ? 'POST' : 'GET',
+      method: method || (body ? 'POST' : 'GET'),
       headers: Object.assign({ 'content-type': 'application/json' }, session ? { authorization: 'Bearer ' + session } : {}),
       body: body ? JSON.stringify(body) : undefined,
     }).then(function (r) {
@@ -173,103 +203,207 @@
   }
 
   function stat(label, value, sub, plain) {
-    return '<div class="card stat"><div class="v' + (plain ? ' plain' : '') + '">' + esc(value) + '</div><div class="l">' + esc(label) + '</div>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>';
+    return '<div class="stat"><div class="v' + (plain ? ' plain' : '') + '">' + esc(value) + '</div><div class="l">' + esc(label) + '</div>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>';
   }
   function meter(label, used, limit) {
     var pct = Math.min(100, used / limit * 100), c = pct >= 90 ? 'var(--bad)' : pct >= 70 ? 'var(--warn)' : 'var(--accent)';
-    return '<div class="card"><div style="display:flex"><b style="flex:1">' + esc(label) + '</b><b style="color:' + c + '">' + (pct < 1 && used > 0 ? '&lt;1' : Math.round(pct)) + '%</b></div>' +
+    return '<div class="lim"><div style="display:flex"><b style="flex:1">' + esc(label) + '</b><b style="color:' + c + '">' + (pct < 1 && used > 0 ? '&lt;1' : Math.round(pct)) + '%</b></div>' +
       '<div class="meter"><div style="width:' + Math.max(pct, used ? 1 : 0) + '%;background:' + c + '"></div></div><div class="muted">' + n(used) + ' of ' + n(limit) + ' free</div></div>';
   }
+  function btn(act, id, name, label, kind) {
+    return '<button class="btn' + (kind ? ' ' + kind : '') + '" data-act="' + act + '" data-id="' + esc(id) + '" data-name="' + esc(name) + '">' + label + '</button>';
+  }
+  function item(main, acts) {
+    return '<div class="item"><div class="main">' + main + '</div>' + (acts ? '<div class="acts">' + acts + '</div>' : '') + '</div>';
+  }
 
+  // Layout (user, 2026-11-18: "clean and compact"): headline numbers in one row, then two columns.
+  // Left: what needs you (to do, sign-ups). Right: how things are going (today, reels, content, limits, people).
   function render(d) {
     var u = d.users, h = '';
-    h += '<p class="muted">Updated ' + ago(d.at) + '</p>';
     d.alerts.forEach(function (a) { h += '<div class="alert">⚠ ' + esc(a) + '</div>'; });
+    h += '<div class="kpis">' + stat('Active today', n(u.dau)) + stat('Active 7 days', n(u.wau)) + stat('Active 30 days', n(u.mau)) +
+      stat('Stickiness', u.stickiness + '%', 'today ÷ 30 days') + stat('Accounts', n(u.total), n(u.diners) + ' diners · ' + n(u.restaurants) + ' restaurants', true) +
+      stat('New today', '+' + n(u.newToday), n(u.new7d) + ' in 7 d · ' + n(u.new30d) + ' in 30 d', true) + stat('Verified', n(u.verified), null, true) + '</div>';
 
-    var todo = d.todo.requests.length + d.todo.claims.length;
-    h += '<div class="cols"><div>';
-    var reports = d.todo.placeReports || [];
-    var creports = d.todo.contentReports || [];
-    todo += reports.length + creports.length;
-    h += '<h2>To do' + (todo ? ' <span class="count">' + todo + '</span>' : '') + '</h2><div class="card">';
+    h += '<div class="cols"><div class="stack">';
+    var reports = d.todo.placeReports || [], creports = d.todo.contentReports || [];
+    var names = d.todo.names || [];
+    var todo = d.todo.requests.length + d.todo.claims.length + reports.length + creports.length + d.todo.social.length + names.length;
+    h += '<div class="card"><h2>To do' + (todo ? ' <span class="count">' + todo + '</span>' : '') + '</h2>';
+    if (!todo) h += '<p class="muted">Nothing waiting on you.</p>';
+    names.forEach(function (x) {
+      var what = x.kind === 'rename'
+        ? '<b>' + esc(x.restaurant) + ' → ' + esc(x.name) + '</b><span class="muted">Rename the page. The old name stays, so its saves keep counting.</span>'
+        : '<b>Count “' + esc(x.name) + '” for ' + esc(x.restaurant) + '</b><span class="muted">' + (x.saves ? n(x.saves) + ' saves under that name nearby' : 'No saves under that name nearby yet') + '. Check it’s the same place, not a neighbour.</span>';
+      h += item('<span class="tag">' + (x.kind === 'rename' ? 'Rename request' : 'Link a name') + '</span>' + what +
+        (x.note ? '<span class="muted">“' + esc(x.note) + '”</span>' : '') +
+        '<span class="muted">' + esc(x.address) + ' · ' + esc(x.email || '') + ' · ' + ago(x.at) + ' · <a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(x.name) + '%20' + x.lat + ',' + x.lng + '">check on Google Maps</a></span>',
+        btn('name-no', x.id, x.name, 'Reject') + btn('name-yes', x.id, x.name, 'Approve', 'primary'));
+    });
     creports.forEach(function (r) {
       var what = r.target_type === 'user' ? 'Profile @' + esc(r.target_username) : (r.target_type === 'spot' ? 'Spot' : 'List') + ' “' + esc(r.title || '?') + '” by @' + esc(r.target_username);
-      h += '<div class="item"><div class="main"><span class="tag" style="color:var(--bad)">Report · ' + esc(r.reasonLabel) + '</span><b>' + what + '</b>' +
+      h += item('<span class="tag" style="color:var(--bad)">Report · ' + esc(r.reasonLabel) + '</span><b>' + what + '</b>' +
         (r.note ? '<span class="muted">“' + esc(r.note) + '”</span>' : '') +
-        '<span class="muted">by @' + esc(r.reporter_username) + ' · ' + ago(r.created_at) + (r.against > 1 ? ' · ' + r.against + ' open reports about @' + esc(r.target_username) : '') + '</span></div>' +
-        '<button class="btn" data-act="cr-dismiss" data-id="' + esc(r.id) + '" data-name="' + esc(r.target_username) + '">Dismiss</button>' +
-        (r.target_type !== 'user' ? '<button class="btn" data-act="cr-hide" data-id="' + esc(r.id) + '" data-name="' + esc(r.target_username) + '">Hide</button>' : '') +
-        '<button class="btn danger" data-act="cr-suspend" data-id="' + esc(r.id) + '" data-name="' + esc(r.target_username) + '">Suspend</button></div>';
+        '<span class="muted">by @' + esc(r.reporter_username) + ' · ' + ago(r.created_at) + (r.against > 1 ? ' · ' + r.against + ' open reports about @' + esc(r.target_username) : '') + '</span>',
+        btn('cr-dismiss', r.id, r.target_username, 'Dismiss') + (r.target_type !== 'user' ? btn('cr-hide', r.id, r.target_username, 'Hide') : '') + btn('cr-suspend', r.id, r.target_username, 'Suspend', 'danger'));
     });
-    var KIND = { closed: 'closed for good', temp: 'closed for now', hours: 'hours wrong', open: 'open again' };
+    notesFor = {};
+    var KIND = { closed: 'closed for good', temp: 'closed for now', hours: 'hours wrong', open: 'open again', renamed: 'new name' };
     reports.forEach(function (g) {
       var counts = Object.keys(KIND).filter(function (k) { return g.kinds[k]; }).map(function (k) { return KIND[k] + ' ×' + g.kinds[k]; }).join(' · ');
-      var ids = esc(g.ids.join(','));
-      h += '<div class="item"><div class="main"><span class="tag">Diners report a change</span><b>' + esc(g.name) + '</b><span class="muted">' + esc(counts) + ' · ' + ago(g.latest) + '</span>' +
+      var ids = g.ids.join(',');
+      h += item('<span class="tag">Diners report a change</span><b>' + esc(g.name) + '</b><span class="muted">' + esc(counts) + ' · ' + ago(g.latest) + '</span>' +
         g.notes.slice(0, 3).map(function (x) { return '<span class="muted">“' + esc(x.text) + '”' + (x.by ? ' · @' + esc(x.by) : '') + '</span>'; }).join('') +
-        '<a class="muted" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(g.name) + '%20' + g.lat + ',' + g.lng + '">Check it on Google Maps</a></div>' +
-        '<button class="btn danger" data-act="place-closed" data-id="' + ids + '" data-name="' + esc(g.name) + '">Closed for good</button>' +
-        '<button class="btn" data-act="place-temp" data-id="' + ids + '" data-name="' + esc(g.name) + '">Closed for now</button>' +
-        '<button class="btn" data-act="place-open" data-id="' + ids + '" data-name="' + esc(g.name) + '">Open</button>' +
-        '<button class="btn" data-act="place-dismiss" data-id="' + ids + '" data-name="' + esc(g.name) + '">Dismiss</button></div>';
+        '<a class="muted" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(g.name) + '%20' + g.lat + ',' + g.lng + '">Check it on Google Maps</a>',
+        (g.claimed && (g.kinds.renamed || g.kinds.hours) ? '<span class="muted" style="flex-basis:100%">Claimed: its owner sees these suggestions and sets the name and hours.</span>' : '') +
+        (g.kinds.renamed && !g.claimed ? btn('place-rename', ids, g.name, 'Use new name') : '') + (g.kinds.hours && !g.claimed ? btn('place-hours', ids, g.name, 'Set hours') : '') +
+        (g.kinds.closed || g.kinds.temp || g.kinds.open ? btn('place-closed', ids, g.name, 'Closed for good', 'danger') + btn('place-temp', ids, g.name, 'Closed for now') + btn('place-open', ids, g.name, 'Open') : '') +
+        btn('place-dismiss', ids, g.name, 'Dismiss'));
+      notesFor[ids] = g.notes;
     });
-    if (!todo) h += '<p class="muted">Nothing waiting on you.</p>';
     d.todo.requests.forEach(function (r) {
-      h += '<div class="item"><div class="main"><span class="tag">Verification request</span><b>@' + esc(r.username) + (r.name ? ' · ' + esc(r.name) : '') + '</b><span class="muted">' + esc(r.email) + ' · ' + n(r.spots) + ' spots · asked ' + ago(r.requested) + '</span></div>' +
-        '<button class="btn" data-act="req-no" data-id="' + esc(r.id) + '" data-name="' + esc(r.username) + '">Reject</button><button class="btn primary" data-act="req-yes" data-id="' + esc(r.id) + '" data-name="' + esc(r.username) + '">Verify</button></div>';
+      h += item('<span class="tag">Verification request</span><b>@' + esc(r.username) + (r.name ? ' · ' + esc(r.name) : '') + '</b><span class="muted">' + esc(r.email) + ' · ' + n(r.spots) + ' spots · asked ' + ago(r.requested) + '</span>',
+        btn('req-no', r.id, r.username, 'Reject') + btn('req-yes', r.id, r.username, 'Verify', 'primary'));
     });
     d.todo.claims.forEach(function (c) {
-      h += '<div class="item"><div class="main"><span class="tag">Restaurant claim</span><b>' + esc(c.name) + '</b><span class="muted">' + esc(c.address) + '<br>' + esc(c.role || 'Role not given') + ' · ' + esc(c.contact) + ' · ' + esc(c.email) +
-        (c.gstin ? '<br>GSTIN <b style="display:inline">' + esc(c.gstin) + '</b> · <a href="https://services.gst.gov.in/services/searchtp" target="_blank" rel="noopener">check on the GST portal</a>' : '') +
-        (c.note ? '<br>“' + esc(c.note) + '”' : '') + '</span></div>' +
-        '<button class="btn" data-act="claim-no" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '">Reject</button><button class="btn primary" data-act="claim-yes" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '">Approve</button></div>';
+      h += item('<span class="tag">Restaurant claim' + (c.unlisted ? ' · not on the map' : '') + '</span>' + (c.unlisted ? '<span class="warn">They added this place themselves: check the name, address and <a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + c.lat + ',' + c.lng + '">pin</a>.</span>' : '') + '<b>' + esc(c.name) + '</b><span class="muted">' + esc(c.address) + '</span><span class="muted">' + esc(c.role || 'Role not given') + ' · ' + esc(c.contact) + ' · ' + esc(c.email) + '</span>' +
+        (c.gstin ? '<span class="muted">GSTIN <b style="display:inline">' + esc(c.gstin) + '</b> · <a href="https://services.gst.gov.in/services/searchtp" target="_blank" rel="noopener">check on the GST portal</a></span>' : '') +
+        (c.note ? '<span class="muted">“' + esc(c.note) + '”</span>' : ''),
+        btn('claim-no', c.id, c.name, 'Reject') + btn('claim-yes', c.id, c.name, 'Approve', 'primary'));
+    });
+    // Only ones waiting here; the rest show with each person in "Find someone".
+    d.todo.social.forEach(function (s) {
+      h += item('<span class="tag">Instagram / YouTube waiting</span><b>@' + esc(s.handle) + ' · ' + (s.platform === 'instagram' ? 'Instagram' : 'YouTube') + '</b><span class="muted">on @' + esc(s.username) + (s.followers != null ? ' · ' + n(s.followers) + ' followers' : '') + ' · ' + ago(s.at) + '</span>',
+        btn('social-remove', s.id, s.handle, 'Remove', 'danger'));
     });
     h += '</div>';
+    h += '<div class="card" id="signups"><h2>Sign-ups</h2><p class="muted">Loading…</p></div>';
+    h += '</div><div class="stack">';
 
-    h += '<h2>Users</h2><div class="grid">' + stat('Today (DAU)', n(u.dau)) + stat('7 days (WAU)', n(u.wau)) + stat('30 days (MAU)', n(u.mau)) + stat('Stickiness', u.stickiness + '%', 'DAU ÷ MAU') + '</div>';
-    h += '<div class="grid" style="margin-top:12px">' + stat('Accounts', n(u.total), n(u.diners) + ' diners · ' + n(u.restaurants) + ' restaurants', true) + stat('New today', '+' + n(u.newToday), n(u.new7d) + ' in 7 d · ' + n(u.new30d) + ' in 30 d', true) + stat('Verified', n(u.verified), null, true) + '</div>';
+    h += '<div class="card"><h2>Today</h2><div class="tiles">' + stat('Reels shared', n(d.today.reels)) + stat('Spots saved', n(d.content.spotsToday)) + stat('Routes', n(d.today.routes)) + stat('Place searches', n(d.today.placeSearches)) + '</div>';
     var max = Math.max.apply(null, [1].concat(u.series.map(function (s) { return Math.max(s.active, s.signups); })));
-    h += '<div class="card" style="margin-top:12px"><span class="tag">Last 14 days · active (bars), sign-ups (dots)</span><div class="chart">';
+    h += '<div class="muted" style="margin-top:10px">Last 14 days: people active (bars), sign-ups (dots)</div><div class="chart">';
     u.series.forEach(function (s) {
       h += '<div class="col" title="' + esc(s.day) + ': ' + s.active + ' active, ' + s.signups + ' sign-ups"><div class="b" style="height:' + (s.active / max * 100) + '%"></div>' +
         (s.signups ? '<div class="d" style="bottom:' + (s.signups / max * 100) + '%"></div>' : '') + '<div class="x">' + esc(s.day.slice(8)) + '</div></div>';
     });
     h += '</div></div>';
-    h += '</div><div>';
 
-    h += '<h2>Today</h2><div class="grid">' + stat('Reels shared', n(d.today.reels)) + stat('Spots saved', n(d.content.spotsToday)) + stat('Routes', n(d.today.routes)) + stat('Place searches', n(d.today.placeSearches)) + '</div>';
-    h += '<h2>Reel reading (30 days)</h2><div class="card"><div class="stat"><div class="v">' + (d.reels.accuracy == null ? '–' : d.reels.accuracy + '%') + '</div><div class="l">kept as SpotoGo read it, of ' + n(d.reels.saved30d) + ' reels saved</div></div>' +
-      '<p class="muted">Renamed ' + n(d.reels.renamed) + ' · moved ' + n(d.reels.moved) + ' · found by the person ' + n(d.reels.found) + '<br>Misses become test cases: <code>cd backend; node scripts/reel-feedback.mjs</code></p></div>';
+    // Plain words (user, 2026-11-18): how often SpotoGo read the shared reel right.
+    h += '<div class="card"><h2>How well SpotoGo reads reels <span class="muted">last 30 days</span></h2><div class="row"><div class="stat" style="border:0;padding:0"><div class="v">' + (d.reels.accuracy == null ? '–' : d.reels.accuracy + '%') + '</div></div>' +
+      '<div class="muted" style="flex:1;min-width:180px">got it right: ' + n(d.reels.kept) + ' of ' + n(d.reels.saved30d) + ' shared reels were saved exactly as SpotoGo read them</div></div>' +
+      '<p class="muted">Fixed by the person before saving: name changed ' + n(d.reels.renamed) + ' · pin moved or another branch ' + n(d.reels.moved) + ' · found nothing, they searched ' + n(d.reels.found) + '</p>';
     var rc = d.reelCheck;
     if (rc && rc.total) {
       var pct = Math.round(100 * rc.reviewed / rc.total);
-      h += '<h2>Reel check (saved reels)</h2><div class="card"><div class="stat"><div class="v">' + n(rc.reviewed) + ' / ' + n(rc.total) + '</div><div class="l">reviewed (' + pct + '%)' + (rc.accuracy == null ? '' : ' · reader right on ' + rc.accuracy + '% of food reels') + '</div></div>' +
-        '<div style="height:10px;border-radius:5px;background:var(--border);overflow:hidden;margin:8px 0"><div style="height:10px;width:' + pct + '%;background:var(--accent, #48B88C)"></div></div>' +
+      h += '<h3 style="margin-top:12px">Reel check (saved reels)</h3><div class="row"><b>' + n(rc.reviewed) + ' / ' + n(rc.total) + '</b><span class="muted" style="flex:1">reviewed (' + pct + '%)' + (rc.accuracy == null ? '' : ' · reader right on ' + rc.accuracy + '% of food reels') + '</span><a class="btn primary" href="/admin/review/">Review reels</a></div>' +
+        '<div class="meter"><div style="width:' + pct + '%;background:var(--accent)"></div></div>' +
         '<p class="muted">Right ' + n(rc.right) + ' · wrong ' + n(rc.wrong) + (rc.notInPost ? ' · name only in video ' + n(rc.notInPost) : '') + ' · not food ' + n(rc.notfood) + (rc.notfoodKinds && (rc.notfoodKinds.recipe + rc.notfoodKinds.trip + rc.notfoodKinds.other) ? ' (recipes ' + n(rc.notfoodKinds.recipe) + ', trips ' + n(rc.notfoodKinds.trip) + ', other ' + n(rc.notfoodKinds.other) + ')' : '') + ' · skipped ' + n(rc.skip) + (rc.lastAnsweredAt ? ' · last answer ' + ago(rc.lastAnsweredAt) : '') + '</p>' +
-        (rc.places && rc.places.reels ? '<p class="muted">Several places: ' + n(rc.places.reviewedReels) + ' of ' + n(rc.places.reels) + ' reels checked place by place' + (rc.places.accuracy == null ? '' : ' · places right ' + rc.places.accuracy + '%') + (rc.places.missed ? ' · ' + n(rc.places.missed) + ' missed' : '') + '</p>' : '') +
-        '<a class="btn primary" href="/admin/review/">Review reels</a></div>';
+        (rc.places && rc.places.reels ? '<p class="muted">Several places: ' + n(rc.places.reviewedReels) + ' of ' + n(rc.places.reels) + ' reels checked place by place' + (rc.places.accuracy == null ? '' : ' · places right ' + rc.places.accuracy + '%') + (rc.places.missed ? ' · ' + n(rc.places.missed) + ' missed' : '') + '</p>' : '');
     }
-    h += '<h2>Content</h2><div class="grid">' + stat('Spots', n(d.content.spots), n(d.content.publicSpots) + ' public', true) + stat('People saving', n(d.content.savers), null, true) + stat('Lists', n(d.content.lists), null, true) + stat('Official restaurants', n(d.content.officialRestaurants), null, true) + '</div>';
+    h += '</div>';
 
-    h += '<h2>Free limits (' + esc(d.limits.month) + ')</h2>';
+    h += '<div class="card"><h2>Content</h2><div class="tiles">' + stat('Spots', n(d.content.spots), n(d.content.publicSpots) + ' public', true) + stat('People saving', n(d.content.savers), null, true) + stat('Lists', n(d.content.lists), null, true) + stat('Official restaurants', n(d.content.officialRestaurants), null, true) + '</div></div>';
+
+    h += '<div class="card"><h2>Free limits <span class="muted">' + esc(d.limits.month) + '</span></h2>';
     d.limits.ola.forEach(function (o) { h += meter(o.api === 'ola_directions' ? 'Ola routes (this month)' : 'Ola place search (this month)', o.count, o.free); });
     var cf = d.limits.cloudflare;
-    h += cf.today == null ? '<div class="card"><b>Cloudflare requests (today)</b><p class="muted">' + (cf.connected ? 'Couldn’t read it right now.' : 'Not connected yet: add the analytics token (scripts/save-cf-token.ps1).') + '</p></div>' : meter('Cloudflare requests (today, UTC)', cf.today, cf.limit);
-    h += '<p class="muted">Ola billing and credits: Krutrim Cloud console → Usage. Cloudflare: dashboard → Workers &amp; Pages.</p>';
+    h += cf.today == null ? '<div class="lim"><b>Cloudflare requests (today)</b><div class="muted">' + (cf.connected ? 'Couldn’t read it right now.' : 'Not connected yet: add the analytics token (scripts/save-cf-token.ps1).') + '</div></div>' : meter('Cloudflare requests (today, UTC)', cf.today, cf.limit);
+    h += '<p class="muted">Ola billing and credits: Krutrim Cloud console → Usage. Cloudflare: dashboard → Workers &amp; Pages.</p></div>';
 
-    // Only ones waiting here; the rest show with each person in "Find someone".
-    if (d.todo.social.length) h += '<h2>Instagram / YouTube waiting</h2><div class="card">';
-    d.todo.social.forEach(function (s) {
-      h += '<div class="item"><div class="main"><b>@' + esc(s.handle) + ' · ' + (s.platform === 'instagram' ? 'Instagram' : 'YouTube') + '</b><span class="muted">on @' + esc(s.username) + (s.followers != null ? ' · ' + n(s.followers) + ' followers' : '') + ' · ' + (s.status === 'pending' ? 'waiting' : 'showing') + ' · ' + ago(s.at) + '</span></div>' +
-        '<button class="btn danger" data-act="social-remove" data-id="' + esc(s.id) + '" data-name="' + esc(s.handle) + '">Remove</button></div>';
-    });
-    if (d.todo.social.length) h += '</div>';
-
-    h += '<h2>Find someone</h2><div class="card"><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
+    h += '<div class="card"><h2>Find someone</h2><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
     h += '</div></div>';
+    h += '<p class="muted" style="margin-top:12px">Updated ' + ago(d.at) + '</p>';
     $('app').innerHTML = h;
     $('q').oninput = searchSoon;
+    loadAccess();
   }
+
+  // Sign-ups (2026-11-18): invite-only or open with a daily limit, invite codes, the waitlist.
+  var showAllCodes = false;
+  function loadAccess() {
+    api('/admin/api/access').then(renderAccess).catch(function (e) { if ($('signups')) $('signups').innerHTML = '<h2>Sign-ups</h2><p class="err">' + esc(e.message) + '</p>'; });
+  }
+  function renderAccess(a) {
+    var box = $('signups');
+    if (!box) return;
+    var mode = function (m, label) { return '<button class="btn' + (a.mode === m ? ' primary' : '') + '" data-acc="mode" data-v="' + m + '">' + label + '</button>'; };
+    var h = '<h2>Sign-ups</h2><div class="split"><div>';
+    h += '<h3>Who can join</h3><div class="row"><span class="seg">' + mode('invite', 'Invite only') + mode('open', 'Open, with a daily limit') + '</span></div>';
+    h += '<p class="muted">' + (a.mode === 'invite'
+      ? 'Only people with an invite code get in. Everyone else joins the waitlist.'
+      : 'New accounts get in until today’s limit (India time); then they join the waitlist. Each morning the waitlist gets the new day’s room first. Codes always work and don’t count.') + '</p>';
+    h += '<div class="row"><span class="muted">Daily limit</span><input id="accLimit" type="number" min="0" value="' + esc(a.limit) + '" /><button class="btn" data-acc="limit">Save</button>' +
+      '<span class="muted">Today: ' + n(a.today) + ' new without a code, ' + n(a.todayWithCode) + ' with a code</span></div></div>';
+
+    h += '<div><h3>Waitlist · ' + n(a.waitlist) + '</h3>';
+    if (a.waitlist) {
+      var cityOpts = '<option value="">Everyone</option>' + (a.byCity || []).filter(function (c) { return c.city; }).map(function (c) { return '<option value="' + esc(c.city) + '">' + esc(c.city) + ' · ' + n(c.n) + '</option>'; }).join('');
+      h += '<p class="muted">By city: ' + ((a.byCity || []).map(function (c) { return esc(c.city || 'didn’t say') + ' ' + n(c.n); }).join(' · ') || '—') + '</p>';
+      h += '<div class="row"><span class="muted">Let in</span><input id="accLet" type="number" min="1" max="500" value="' + Math.min(a.waitlist, 25) + '" /><select id="accCity">' + cityOpts + '</select><button class="btn primary" data-acc="admit">Let them in</button><span class="muted">oldest first; each gets an email</span></div>';
+      h += a.waiting.slice(0, 5).map(function (w) { return item('<span>' + esc(w.name || w.email) + (w.city ? ' · ' + esc(w.city) : '') + '</span><span class="muted">' + esc(w.email) + ' · waiting ' + ago(w.waitlisted_at) + '</span>'); }).join('');
+    } else {
+      h += '<p class="muted">Nobody is waiting.</p>';
+    }
+    h += '</div>';
+
+    h += '<div><h3>Invite codes</h3><p class="muted">A code lets someone skip the waitlist: one person (a friend) or a group (e.g. 50). Leave Code empty for a random one like SPOTO-7KQ2MD.</p>' +
+      '<div class="form">' +
+      '<label>Code (optional)<input id="accCode" placeholder="e.g. BANDRA50" /></label>' +
+      '<label>People per code<input id="accUses" type="number" min="1" value="1" /></label>' +
+      '<label>Number of codes<input id="accCount" type="number" min="1" max="50" value="1" title="Only for random codes" /></label>' +
+      '<label>Expires after (days)<input id="accDays" type="number" min="1" placeholder="never" /></label>' +
+      '<label class="wide">Who it’s for<input id="accNote" placeholder="e.g. Bandra foodies group" /></label>' +
+      '<button class="btn primary" data-acc="create" style="height:32px">Create</button></div>';
+    var codes = showAllCodes ? a.codes : a.codes.slice(0, 6);
+    h += codes.map(function (c) {
+      var left = c.max_uses - c.uses, expired = c.expires_at && c.expires_at < Date.now();
+      var state = c.disabled ? 'switched off' : expired ? 'expired' : left <= 0 ? 'used up' : n(left) + ' left';
+      return item('<b class="code">' + esc(c.code) + '</b><span class="muted">' + n(c.uses) + ' of ' + n(c.max_uses) + ' used · ' + state +
+        (c.note ? ' · ' + esc(c.note) : '') + (c.expires_at ? ' · until ' + new Date(c.expires_at).toLocaleDateString('en-IN') : '') + '</span>',
+        '<button class="btn" data-acc="copy" data-v="' + esc(c.code) + '">Copy</button>' +
+        '<button class="btn' + (c.disabled ? '' : ' danger') + '" data-acc="' + (c.disabled ? 'on' : 'off') + '" data-v="' + esc(c.code) + '">' + (c.disabled ? 'Switch on' : 'Switch off') + '</button>' +
+        '<button class="btn danger" data-acc="delete" data-v="' + esc(c.code) + '" title="Remove this code">Delete</button>');
+    }).join('') || '<p class="muted">No codes yet.</p>';
+    if (a.codes.length > 6) h += '<button class="btn more" data-acc="all">' + (showAllCodes ? 'Show fewer' : 'Show all ' + n(a.codes.length) + ' codes') + '</button>';
+    h += '</div></div>';
+    box.innerHTML = h;
+    box._data = a;
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-acc]');
+    if (!b) return;
+    var act = b.getAttribute('data-acc'), v = b.getAttribute('data-v');
+    if (act === 'all') { showAllCodes = !showAllCodes; return renderAccess($('signups')._data); }
+    var done = function (p) { b.disabled = true; p.then(loadAccess).catch(function (err) { alert(err.message); b.disabled = false; }); };
+    if (act === 'mode') {
+      var msg = v === 'invite' ? 'Switch to invite only? New people without a code go on the waitlist.' : 'Open sign-ups with the daily limit? The waitlist is let in each morning while there’s room.';
+      return ask(msg, 'Switch').then(function (ok) { if (ok !== false) done(api('/admin/api/access', { mode: v })); });
+    }
+    if (act === 'limit') return done(api('/admin/api/access', { limit: Number($('accLimit').value) }));
+    if (act === 'admit') {
+      var k = Number($('accLet').value), c = $('accCity') ? $('accCity').value : '';
+      return ask('Let the ' + k + ' oldest people on the waitlist' + (c ? ' in ' + c : '') + ' in? Each gets an email.', 'Let them in').then(function (ok) { if (ok !== false) done(api('/admin/api/waitlist/admit', { n: k, city: c || undefined })); });
+    }
+    if (act === 'create') {
+      return done(api('/admin/api/invites', {
+        code: $('accCode').value.trim() || undefined, uses: Number($('accUses').value), count: Number($('accCount').value),
+        days: $('accDays').value ? Number($('accDays').value) : undefined, note: $('accNote').value.trim() || undefined,
+      }));
+    }
+    if (act === 'off' || act === 'on') return done(api('/admin/api/invites/' + encodeURIComponent(v), { disabled: act === 'off' }));
+    if (act === 'delete') {
+      return ask('Delete the code ' + v + '? It stops working and leaves the list. People it already let in stay in.', 'Delete', true).then(function (ok) {
+        if (ok !== false) done(api('/admin/api/invites/' + encodeURIComponent(v), null, 'DELETE'));
+      });
+    }
+    if (act === 'copy') {
+      (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject(new Error('Copy isn’t available here.'))).then(function () {
+        b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500);
+      }).catch(function (err) { alert(err.message); });
+    }
+  });
 
   function load() {
     $('app').innerHTML = $('app').innerHTML || '<p class="muted">Loading…</p>';
@@ -279,6 +413,7 @@
     });
   }
 
+  var notesFor = {};
   var timer = null;
   function searchSoon() {
     clearTimeout(timer);
@@ -312,6 +447,10 @@
     'place-temp': ['Mark % as closed for now? Everyone who saved it gets a phone alert.', 'Closed for now', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'temp' }); }],
     'place-open': ['Mark % as open? Any closure shown for it is cleared.', 'Open', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'open' }); }],
     'place-dismiss': ['Dismiss the reports for %? Nothing changes on the map.', 'Dismiss', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'dismiss' }); }],
+    'name-yes': ['Approve this for %? It changes what diners see.', 'Approve', false, function (id) { return api('/admin/api/names/' + encodeURIComponent(id), { approve: true }); }],
+    'name-no': ['Reject this request for %? Tell them why.', 'Reject', true, function (id, why) { return api('/admin/api/names/' + encodeURIComponent(id), { approve: false, reason: why }); }, true],
+    'place-rename': ['', '', false, null],
+    'place-hours': ['', '', false, null],
     'claim-yes': ['Approve %? They get an official page they manage, with the exact pin.', 'Approve', false, function (id) { return api('/admin/api/claims/' + id, { approve: true }); }],
     'claim-no': ['Reject the claim for %? It stays unclaimed.', 'Reject', true, function (id) { return api('/admin/api/claims/' + id, { approve: false }); }],
     'social-remove': ['Remove @% from that profile?', 'Remove', true, function (id, why) { return api('/admin/api/social/' + id + '/remove', { reason: why }); }, true],
@@ -321,8 +460,22 @@
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-act]');
     if (!b) return;
-    var a = ACTIONS[b.getAttribute('data-act')];
+    var act = b.getAttribute('data-act');
+    var a = ACTIONS[act];
     if (!a) return;
+    if (act === 'place-rename' || act === 'place-hours') {
+      // Prefilled with what diners wrote; the founder can correct it.
+      var ids = b.getAttribute('data-id'), notes = notesFor[ids] || [];
+      var want = act === 'place-rename' ? 'renamed' : 'hours';
+      var first = notes.filter(function (x) { return x.kind === want; })[0] || notes[0];
+      var guess = first ? first.text : '';
+      var v = prompt(act === 'place-rename' ? 'New name for ' + b.getAttribute('data-name') + ':' : 'Hours for ' + b.getAttribute('data-name') + ' (like 12 pm – 11 pm):', guess);
+      if (!v || !v.trim()) return;
+      b.disabled = true;
+      api('/admin/api/place-reports', { ids: ids.split(','), action: act === 'place-rename' ? 'rename' : 'hours', value: v.trim() })
+        .then(load).catch(function (err) { alert(err.message); b.disabled = false; });
+      return;
+    }
     ask(a[0].replace('%', b.getAttribute('data-name') || ''), a[1], a[2], !!a[4]).then(function (why) {
       if (why === false) return;
       b.disabled = true;
