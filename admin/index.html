@@ -432,6 +432,7 @@
       return item('<b class="code">' + esc(c.code) + '</b><span class="muted">' + n(c.uses) + ' of ' + n(c.max_uses) + ' used · ' + state +
         (c.note ? ' · ' + esc(c.note) : '') + (c.expires_at ? ' · until ' + new Date(c.expires_at).toLocaleDateString('en-IN') : '') + '</span>',
         '<button class="btn" data-acc="copy" data-v="' + esc(c.code) + '">Copy</button>' +
+        '<button class="btn" data-acc="copylink" data-v="' + esc(c.code) + '" title="spotogo.in/get with this code: download page + install steps">Copy invite link</button>' +
         '<button class="btn' + (c.disabled ? '' : ' danger') + '" data-acc="' + (c.disabled ? 'on' : 'off') + '" data-v="' + esc(c.code) + '">' + (c.disabled ? 'Switch on' : 'Switch off') + '</button>' +
         '<button class="btn danger" data-acc="delete" data-v="' + esc(c.code) + '" title="Remove this code">Delete</button>');
     }).join('') || '<p class="muted">No codes yet.</p>';
@@ -468,9 +469,12 @@
         if (ok !== false) done(api('/admin/api/invites/' + encodeURIComponent(v), null, 'DELETE'));
       });
     }
-    if (act === 'copy') {
-      (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject(new Error('Copy isn’t available here.'))).then(function () {
-        b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500);
+    if (act === 'copy' || act === 'copylink') {
+      // The invite link opens spotogo.in/get: the download button, install steps and this code.
+      var text = act === 'copy' ? v : 'Try SpotoGo with my invite code ' + v + ': https://spotogo.in/get?code=' + encodeURIComponent(v);
+      var label = b.textContent;
+      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject(new Error('Copy isn’t available here.'))).then(function () {
+        b.textContent = 'Copied'; setTimeout(function () { b.textContent = label; }, 1500);
       }).catch(function (err) { alert(err.message); });
     }
   });
