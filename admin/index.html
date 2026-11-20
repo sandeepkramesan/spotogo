@@ -41,7 +41,7 @@
   @media (max-width: 420px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 640px) { #who { display: none; } .bar h1 { font-size: 14px; } }
   .cols { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); margin-top: 12px; align-items: start; }
-  @media (min-width: 960px) { .cols { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); } }
+  @media (min-width: 960px) { .cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
   .stack { display: grid; gap: 12px; min-width: 0; }
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; min-width: 0; }
   .card > h2:first-child { margin-top: 0; }
@@ -226,7 +226,7 @@
       stat('Stickiness', u.stickiness + '%', 'today ÷ 30 days') + stat('Accounts', n(u.total), n(u.diners) + ' diners · ' + n(u.restaurants) + ' restaurants', true) +
       stat('New today', '+' + n(u.newToday), n(u.new7d) + ' in 7 d · ' + n(u.new30d) + ' in 30 d', true) + stat('Verified', n(u.verified), null, true) + '</div>';
 
-    h += '<div class="cols"><div class="stack">';
+    h += '<div class="cols"><div class="stack" id="colA">';
     var reports = d.todo.placeReports || [], creports = d.todo.contentReports || [];
     var names = d.todo.names || [];
     var todo = d.todo.requests.length + d.todo.claims.length + reports.length + creports.length + d.todo.social.length + names.length;
@@ -279,7 +279,7 @@
     });
     h += '</div>';
     h += '<div class="card" id="signups"><h2>Sign-ups</h2><p class="muted">Loading…</p></div>';
-    h += '</div><div class="stack">';
+    h += '</div><div class="stack" id="colB">';
 
     h += '<div class="card"><h2>Today</h2><div class="tiles">' + stat('Reels shared', n(d.today.reels)) + stat('Spots saved', n(d.content.spotsToday)) + stat('Routes', n(d.today.routes)) + stat('Place searches', n(d.today.placeSearches)) + '</div>';
     var max = Math.max.apply(null, [1].concat(u.series.map(function (s) { return Math.max(s.active, s.signups); })));
@@ -320,7 +320,39 @@
     $('q').oninput = searchSoon;
     loadAccess();
     loadScores(scoreCity);
+    balance();
   }
+
+  // Two even columns (user, 2026-11-20: "the dashboard is lopsided"): the cards keep their order and
+  // each goes into whichever column is shorter at that point. Run again when a card that loads later
+  // (sign-ups, scores) gets its content and when the window changes width, not while typing a search.
+  // Below 960 px there's one column, in order.
+  function balance() {
+    var a = $('colA'), b = $('colB');
+    if (!a || !b) return;
+    var cards = Array.prototype.slice.call(document.querySelectorAll('#colA > .card, #colB > .card'));
+    cards.forEach(function (c, i) { if (!c.dataset.order) c.dataset.order = String(i); });
+    cards.sort(function (x, y) { return Number(x.dataset.order) - Number(y.dataset.order); });
+    var two = window.matchMedia('(min-width: 960px)').matches;
+    if (!two) {
+      cards.forEach(function (c) { a.appendChild(c); });
+      return;
+    }
+    // Both columns are the same width, so measure every card once in the left one, then try each way
+    // of splitting them (8 cards = 256 ways; "To do" always stays top left) and keep the most even one.
+    cards.forEach(function (c) { a.appendChild(c); });
+    var h = cards.map(function (c) { return c.offsetHeight + 12; });
+    var best = 0, bestTall = Infinity, bestGap = Infinity;
+    for (var mask = 0; mask < 1 << cards.length; mask += 2) {
+      var sa = 0, sb = 0;
+      for (var i = 0; i < cards.length; i++) { if (mask & (1 << i)) sb += h[i]; else sa += h[i]; }
+      var tall = Math.max(sa, sb), gap = Math.abs(sa - sb);
+      if (tall < bestTall || (tall === bestTall && gap < bestGap)) { best = mask; bestTall = tall; bestGap = gap; }
+    }
+    cards.forEach(function (c, i) { (best & (1 << i) ? b : a).appendChild(c); });
+  }
+  var balanceTimer = null;
+  window.addEventListener('resize', function () { clearTimeout(balanceTimer); balanceTimer = setTimeout(balance, 150); });
 
   // SpotoGo Score (2026-11-20): private to the founder. Best places per city (unclaimed ones are
   // restaurant leads) and creators whose reels most often send people to a place.
@@ -353,6 +385,7 @@
       return item('<b>' + c.rate + '% · @' + esc(c.handle) + '</b><span class="muted">' + esc(c.platform === 'youtube' ? 'YouTube' : c.platform === 'instagram' ? 'Instagram' : 'Web') + ' · ' + n(c.been) + ' of ' + n(c.saves) + ' went</span>');
     }).join('');
     box.innerHTML = h;
+    balance();
     $('scoreCity').onchange = function () { loadScores(this.value); };
   }
 
@@ -405,6 +438,7 @@
     if (a.codes.length > 6) h += '<button class="btn more" data-acc="all">' + (showAllCodes ? 'Show fewer' : 'Show all ' + n(a.codes.length) + ' codes') + '</button>';
     h += '</div></div>';
     box.innerHTML = h;
+    balance();
     box._data = a;
   }
   document.addEventListener('click', function (e) {
