@@ -312,12 +312,48 @@
     h += cf.today == null ? '<div class="lim"><b>Cloudflare requests (today)</b><div class="muted">' + (cf.connected ? 'Couldn’t read it right now.' : 'Not connected yet: add the analytics token (scripts/save-cf-token.ps1).') + '</div></div>' : meter('Cloudflare requests (today, UTC)', cf.today, cf.limit);
     h += '<p class="muted">Ola billing and credits: Krutrim Cloud console → Usage. Cloudflare: dashboard → Workers &amp; Pages.</p></div>';
 
+    h += '<div class="card" id="scores"><h2>SpotoGo Score</h2><p class="muted">Loading…</p></div>';
     h += '<div class="card"><h2>Find someone</h2><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
     h += '</div></div>';
     h += '<p class="muted" style="margin-top:12px">Updated ' + ago(d.at) + '</p>';
     $('app').innerHTML = h;
     $('q').oninput = searchSoon;
     loadAccess();
+    loadScores(scoreCity);
+  }
+
+  // SpotoGo Score (2026-11-20): private to the founder. Best places per city (unclaimed ones are
+  // restaurant leads) and creators whose reels most often send people to a place.
+  var scoreCity = '';
+  function loadScores(city) {
+    scoreCity = city || '';
+    api('/admin/api/scores' + (scoreCity ? '?city=' + encodeURIComponent(scoreCity) : '')).then(renderScores).catch(function (e) {
+      if ($('scores')) $('scores').innerHTML = '<h2>SpotoGo Score</h2><p class="err">' + esc(e.message) + '</p>';
+    });
+  }
+  function pct(x) { return x == null ? '—' : Math.round(Number(x) * 100) + '%'; }
+  function renderScores(d) {
+    var box = $('scores');
+    if (!box) return;
+    var h = '<h2>SpotoGo Score <span class="muted">only you see it</span></h2>';
+    h += '<p class="muted">' + n(d.scored) + ' of ' + n(d.places) + ' places have a score (3+ people saved it, 2+ went)' + (d.updatedAt ? ' · worked out ' + ago(d.updatedAt) : '') + '. It ranks Trending; nobody else sees the number.</p>';
+    var opts = '<option value="">All of India</option>' + (d.cities || []).map(function (c) { return '<option value="' + esc(c.city) + '"' + (c.city === scoreCity ? ' selected' : '') + '>' + esc(c.city) + ' · ' + n(c.places) + '</option>'; }).join('');
+    h += '<div class="row"><span class="muted">City</span><select id="scoreCity">' + opts + '</select></div>';
+    var leads = d.top.filter(function (p) { return !p.restaurantId; }).length;
+    h += '<h3>Best places' + (leads ? ' · <span class="muted">' + n(leads) + ' not claimed yet: restaurant leads</span>' : '') + '</h3>';
+    if (!d.top.length) h += '<p class="muted">No scores yet.</p>';
+    h += d.top.slice(0, 25).map(function (p) {
+      var x = p.parts || {};
+      return item('<b>' + p.score + ' · ' + esc(p.name) + '</b><span class="muted">' + esc(p.city || '') + ' · ' + n(p.savers) + ' saved, ' + n(p.been) + ' went · rating ' + pct(x.rating) + ', went ' + pct(x.went) + ', reach ' + pct(x.popularity) + ', found by ' + pct(x.discovery) + ', respots ' + pct(x.respots) + (x.burst ? ' · <span class="err">sudden burst</span>' : '') + '</span>',
+        (p.restaurantId ? '<span class="muted">Claimed</span>' : '<span class="muted">Not claimed</span>') + ' <a class="btn" target="_blank" rel="noopener" href="https://spotogo.in' + esc(p.path) + '">Page</a>');
+    }).join('');
+    h += '<h3>Creators who send people out</h3><p class="muted">Of the people who saved a place from their reels, how many went (5+ saves).</p>';
+    if (!d.creators.length) h += '<p class="muted">Not enough saves yet.</p>';
+    h += d.creators.slice(0, 15).map(function (c) {
+      return item('<b>' + c.rate + '% · @' + esc(c.handle) + '</b><span class="muted">' + esc(c.platform === 'youtube' ? 'YouTube' : c.platform === 'instagram' ? 'Instagram' : 'Web') + ' · ' + n(c.been) + ' of ' + n(c.saves) + ' went</span>');
+    }).join('');
+    box.innerHTML = h;
+    $('scoreCity').onchange = function () { loadScores(this.value); };
   }
 
   // Sign-ups (2026-11-18): invite-only or open with a daily limit, invite codes, the waitlist.
