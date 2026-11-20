@@ -17,7 +17,7 @@
   <a class="brand" href="./"><span class="logo-text"><img class="logo" src="logo.png" alt="SpotoGo" /><span class="tagline">Find it. Pin it. Go.</span></span></a>
 
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated: 20 November 2026</p>
+  <p class="updated">Last updated: 20 November 2026 (alerts, near a place you saved)</p>
 
   <p>SpotoGo (“we”) is an Android app, made by ftwco., that pins restaurants you discover in
     Instagram and YouTube food reels on a map. This policy explains what data SpotoGo uses, where it
@@ -83,11 +83,15 @@
       and how many people you follow, and the lists of followers and following.</li>
     <li><strong>Following</strong> someone is public (it appears in those lists). You can unfollow at any
       time.</li>
-    <li><strong>Alerts (optional):</strong> if you turn on the bell on a profile, we store your phone’s
-      notification token in your account and send alerts through <strong>Firebase Cloud Messaging</strong>
-      (Google) when that person adds a public spot. The alert contains their username, the spot’s name and its
-      rating. Turn it off with the bell, or block notifications in your phone’s settings. Logging out removes
-      the token.</li>
+    <li><strong>Alerts (optional):</strong> if you allow notifications, we store your phone’s notification
+      token in your account and send alerts through <strong>Firebase Cloud Messaging</strong> (Google): when
+      someone you follow adds or respots a public spot (their username, the spot’s name and rating), when someone
+      follows you or respots your spot, when one of your spots is trending in its city, when a place you saved
+      closes or posts today’s specials, a reminder about a place you saved a while ago and haven’t been to, and on
+      Sundays how many spots people saved in your city that week. To work these out we use what’s already in your
+      account (your spots, who you follow) and keep a note of which reminders we sent, so none repeat. Switch each
+      kind off in the app (Account → Notifications), mute one person with the bell on their profile, or block
+      notifications in your phone’s settings. Logging out removes the token.</li>
   </ul>
 
   <h2>4. Data that stays on your phone</h2>
@@ -99,6 +103,11 @@
       through our server to Ola Maps to work out the routes; we don’t store them.</li>
     <li><strong>Saved addresses</strong> (Home, Work or names you choose) are kept on your phone only, to
       start a route from them. A route started from one is worked out the same way as above.</li>
+    <li><strong>Near a place you saved (optional, off unless you turn it on):</strong> with your permission
+      to use location “all the time”, your phone watches for when you come within about 250 m of places on your
+      Want to go list and shows an alert. This uses your phone’s own location services in the background; your
+      location isn’t sent to SpotoGo or stored in your account. Turn it off in Account → Notifications or in your
+      phone’s settings.</li>
     <li><strong>Creator profile cache:</strong> public profile details (name and photo) of creators whose
       reels you saved, kept so their pages open quickly.</li>
   </ul>
