@@ -80,6 +80,10 @@
   .form .wide { grid-column: span 2; }
   .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 2px; gap: 2px; }
   .seg .btn { border: 0; }
+  table.rep { width: 100%; border-collapse: collapse; margin: 6px 0 4px; font-size: 13px; }
+  table.rep td, table.rep th { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--border); }
+  table.rep th { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--faint); font-weight: 700; }
+  #repDate { width: auto; }
   .split { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
   .split > div + div { border-top: 1px solid var(--border); padding-top: 12px; }
   .code { font-family: ui-monospace, Consolas, monospace; letter-spacing: .5px; font-size: 13px; }
@@ -279,7 +283,11 @@
     });
     h += '</div>';
     h += '<div class="card" id="signups"><h2>Sign-ups</h2><p class="muted">Loading…</p></div>';
+    h += '<div class="card" id="leaving"><h2>Why people left</h2><p class="muted">Loading…</p></div>';
+    h += '<div class="card" id="foodies"><h2>Lives to eat</h2><p class="muted">Loading…</p></div>';
+    h += '<div class="card"><h2>Find someone</h2><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
     h += '</div><div class="stack" id="colB">';
+    h += '<div class="card" id="reports"><h2>Reports</h2><p class="muted">Loading…</p></div>';
 
     h += '<div class="card"><h2>Today</h2><div class="tiles">' + stat('Reels shared', n(d.today.reels)) + stat('Spots saved', n(d.content.spotsToday)) + stat('Routes', n(d.today.routes)) + stat('Place searches', n(d.today.placeSearches)) + '</div>';
     var max = Math.max.apply(null, [1].concat(u.series.map(function (s) { return Math.max(s.active, s.signups); })));
@@ -313,8 +321,6 @@
     h += '<p class="muted">Ola billing and credits: Krutrim Cloud console → Usage. Cloudflare: dashboard → Workers &amp; Pages.</p></div>';
 
     h += '<div class="card" id="scores"><h2>SpotoGo Score</h2><p class="muted">Loading…</p></div>';
-    h += '<div class="card" id="leaving"><h2>Why people left</h2><p class="muted">Loading…</p></div>';
-    h += '<div class="card"><h2>Find someone</h2><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
     h += '</div></div>';
     h += '<p class="muted" style="margin-top:12px">Updated ' + ago(d.at) + '</p>';
     $('app').innerHTML = h;
@@ -322,7 +328,83 @@
     loadAccess();
     loadScores(scoreCity);
     loadLeaving();
-    balance();
+    loadFoodies();
+    loadReport();
+  }
+
+  // ---------- Reports (user, 2026-11-23): any day, week, month or year, as CSV or a printable page ----------
+  var repPeriod = 'day', repDate = '', repData = null;
+  var PERIOD_NAMES = { day: 'Day', week: 'Week', month: 'Month', year: 'Year' };
+  function istToday(offsetDays) { return new Date(Date.now() + 5.5 * 3600000 - (offsetDays || 0) * 86400000).toISOString().slice(0, 10); }
+  function loadReport() {
+    if (!repDate) repDate = istToday(1);
+    var box = $('reports');
+    if (!box) return;
+    api('/admin/api/report?period=' + repPeriod + '&date=' + repDate).then(function (r) { repData = r; renderReport(); }).catch(function (e) {
+      box.innerHTML = '<h2>Reports</h2><p class="err">' + esc(e.message) + '</p>';
+    });
+  }
+  function changeText(c) { return c == null ? '' : (c > 0 ? '+' : '') + c + '%'; }
+  function renderReport() {
+    var box = $('reports'), r = repData;
+    if (!box || !r) return;
+    var seg = Object.keys(PERIOD_NAMES).map(function (k) { return '<button class="btn' + (repPeriod === k ? ' primary' : '') + '" data-rep="period" data-v="' + k + '">' + PERIOD_NAMES[k] + '</button>'; }).join('');
+    var h = '<h2>Reports</h2><div class="row"><span class="seg">' + seg + '</span><input id="repDate" type="date" value="' + esc(repDate) + '" />' +
+      '<button class="btn" data-rep="csv">Download CSV</button><button class="btn" data-rep="print">Printable report</button></div>';
+    h += '<p class="muted">' + esc(r.label) + ' · compared with ' + esc(r.previousLabel) + '. Summaries come to your phone at 09:00 every day (weekly on Mondays, monthly on the 1st, yearly on 1 January).</p>';
+    h += '<table class="rep"><tr><th>Metric</th><th>' + esc(r.label) + '</th><th>Before</th><th></th></tr>' + r.metrics.map(function (m) {
+      var cls = m.change == null ? '' : m.change > 0 ? 'ok' : m.change < 0 ? 'err' : '';
+      return '<tr><td>' + esc(m.label) + '</td><td><b>' + n(m.value) + '</b></td><td class="muted">' + n(m.previous) + '</td><td class="' + cls + '">' + changeText(m.change) + '</td></tr>';
+    }).join('') + '</table>';
+    if (r.topCities.length) h += '<p class="muted">Most new spots: ' + r.topCities.map(function (c) { return esc(c.city) + ' ' + n(c.n); }).join(' · ') + '</p>';
+    box.innerHTML = h;
+    $('repDate').onchange = function () { repDate = this.value || istToday(1); loadReport(); };
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-rep]');
+    if (!b) return;
+    var act = b.getAttribute('data-rep');
+    if (act === 'period') { repPeriod = b.getAttribute('data-v'); return loadReport(); }
+    if (act === 'csv') {
+      fetch(API + '/admin/api/report?period=' + repPeriod + '&date=' + repDate + '&format=csv', { headers: { authorization: 'Bearer ' + session } })
+        .then(function (res) { if (!res.ok) throw new Error('Error ' + res.status); return res.blob(); })
+        .then(function (blob) {
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'spotogo-' + repPeriod + '-' + repDate + '.csv';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+        }).catch(function (err) { alert(err.message); });
+    }
+    if (act === 'print' && repData) {
+      var r = repData, w = window.open('', '_blank');
+      if (!w) return alert('Allow pop-ups for this page to open the printable report.');
+      w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>SpotoGo report · ' + esc(r.label) + '</title>' +
+        '<style>body{font-family:system-ui,sans-serif;color:#121212;max-width:760px;margin:32px auto;padding:0 16px}h1{margin:0 0 4px}p{color:#555}table{border-collapse:collapse;width:100%;margin-top:16px}td,th{text-align:left;padding:7px 8px;border-bottom:1px solid #e3ded4;font-size:14px}th{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#777}.up{color:#2F9E74}.down{color:#D92D20}@media print{button{display:none}}</style></head><body>' +
+        '<h1>SpotoGo · ' + esc(r.label) + '</h1><p>Compared with ' + esc(r.previousLabel) + ' · made ' + new Date(r.generatedAt).toLocaleString('en-IN') + '</p>' +
+        '<button onclick="print()">Print or save as PDF</button>' +
+        '<table><tr><th>Metric</th><th>' + esc(r.label) + '</th><th>' + esc(r.previousLabel) + '</th><th>Change</th></tr>' + r.metrics.map(function (m) {
+          return '<tr><td>' + esc(m.label) + '</td><td><b>' + n(m.value) + '</b></td><td>' + n(m.previous) + '</td><td class="' + (m.change > 0 ? 'up' : m.change < 0 ? 'down' : '') + '">' + changeText(m.change) + '</td></tr>';
+        }).join('') + '</table>' +
+        (r.topCities.length ? '<h3>Most new spots</h3><table>' + r.topCities.map(function (c) { return '<tr><td>' + esc(c.city) + '</td><td>' + n(c.n) + '</td></tr>'; }).join('') + '</table>' : '') +
+        '</body></html>');
+      w.document.close();
+    }
+  });
+
+  // ---------- People who ticked "I live to eat" on the profile screen ----------
+  function loadFoodies() {
+    api('/admin/api/foodies').then(function (d) {
+      var box = $('foodies');
+      if (!box) return;
+      var h = '<h2>Lives to eat <span class="muted">' + n(d.foodies.length) + ' of ' + n(d.of) + ' profiles</span></h2>' +
+        '<p class="muted">Ticked “I agree that I live to eat and not the other way around.” when they joined.</p>';
+      h += d.foodies.slice(0, 40).map(function (f) {
+        return '<div class="item"><b>@' + esc(f.username || '—') + (f.verified ? ' ✓' : '') + '</b><span class="muted">' + (f.name ? esc(f.name) + ' · ' : '') + n(f.spots) + ' spots · ' + ago(f.at) + '</span></div>';
+      }).join('') || '<p class="muted">Nobody yet.</p>';
+      if (d.foodies.length > 40) h += '<p class="muted">and ' + n(d.foodies.length - 40) + ' more (search them in Find someone).</p>';
+      box.innerHTML = h;
+    }).catch(function (e) { if ($('foodies')) $('foodies').innerHTML = '<h2>Lives to eat</h2><p class="err">' + esc(e.message) + '</p>'; });
   }
 
   // Why people deleted their account (the app asks before deleting; backend/src/leaving.ts).
@@ -346,36 +428,9 @@
     }).catch(function (e) { if ($('leaving')) $('leaving').innerHTML = '<h2>Why people left</h2><p class="err">' + esc(e.message) + '</p>'; });
   }
 
-  // Two even columns (user, 2026-11-20: "the dashboard is lopsided"): the cards keep their order and
-  // each goes into whichever column is shorter at that point. Run again when a card that loads later
-  // (sign-ups, scores) gets its content and when the window changes width, not while typing a search.
-  // Below 960 px there's one column, in order.
-  function balance() {
-    var a = $('colA'), b = $('colB');
-    if (!a || !b) return;
-    var cards = Array.prototype.slice.call(document.querySelectorAll('#colA > .card, #colB > .card'));
-    cards.forEach(function (c, i) { if (!c.dataset.order) c.dataset.order = String(i); });
-    cards.sort(function (x, y) { return Number(x.dataset.order) - Number(y.dataset.order); });
-    var two = window.matchMedia('(min-width: 960px)').matches;
-    if (!two) {
-      cards.forEach(function (c) { a.appendChild(c); });
-      return;
-    }
-    // Both columns are the same width, so measure every card once in the left one, then try each way
-    // of splitting them (8 cards = 256 ways; "To do" always stays top left) and keep the most even one.
-    cards.forEach(function (c) { a.appendChild(c); });
-    var h = cards.map(function (c) { return c.offsetHeight + 12; });
-    var best = 0, bestTall = Infinity, bestGap = Infinity;
-    for (var mask = 0; mask < 1 << cards.length; mask += 2) {
-      var sa = 0, sb = 0;
-      for (var i = 0; i < cards.length; i++) { if (mask & (1 << i)) sb += h[i]; else sa += h[i]; }
-      var tall = Math.max(sa, sb), gap = Math.abs(sa - sb);
-      if (tall < bestTall || (tall === bestTall && gap < bestGap)) { best = mask; bestTall = tall; bestGap = gap; }
-    }
-    cards.forEach(function (c, i) { (best & (1 << i) ? b : a).appendChild(c); });
-  }
-  var balanceTimer = null;
-  window.addEventListener('resize', function () { clearTimeout(balanceTimer); balanceTimer = setTimeout(balance, 150); });
+  // Fixed columns (user, 2026-11-23: "the sections shouldn't move around"): every card has its place in
+  // the HTML (left: things to act on and people; right: numbers). Below 960 px the columns stack.
+  function balance() {}
 
   // SpotoGo Score (2026-11-20): private to the founder. Best places per city (unclaimed ones are
   // restaurant leads) and creators whose reels most often send people to a place.
@@ -533,7 +588,7 @@
               '<button class="btn danger" data-act="social-remove" data-id="' + esc(s.id) + '" data-name="' + esc(s.handle) + '">Remove</button></div>';
           }).join('');
           if (!social && u.verified) social = '<p class="muted sub">No Instagram or YouTube on the profile.</p>';
-          return '<div class="person"><div class="item"><div class="main"><b>@' + esc(u.username || '—') + (u.kind === 'restaurant' ? ' · restaurant' : '') + '</b><span class="muted">' + esc(u.email) + ' · ' + n(u.spots) + ' spots · ' + (u.last_active ? 'active ' + esc(u.last_active) : 'not active yet') + '</span>' + status + '</div>' +
+          return '<div class="person"><div class="item"><div class="main"><b>@' + esc(u.username || '—') + (u.kind === 'restaurant' ? ' · restaurant' : '') + '</b>' + (u.foodie ? '<span class="tag">Lives to eat</span>' : '') + '<span class="muted">' + esc(u.email) + ' · ' + n(u.spots) + ' spots · ' + (u.last_active ? 'active ' + esc(u.last_active) : 'not active yet') + '</span>' + status + '</div>' +
             '<button class="btn ' + (u.verified ? 'danger' : 'primary') + '" data-act="' + (u.verified ? 'unverify' : 'verify') + '" data-id="' + esc(u.id) + '" data-name="' + esc(u.username) + '">' + (u.verified ? 'Unverify' : 'Verify') + '</button></div>' + social + '</div>';
         }).join('') || '<p class="muted">Nobody matches.</p>';
       }).catch(function (e) { $('people').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; });
