@@ -96,9 +96,10 @@
     $('logout').hidden = true;
     app.innerHTML =
       '<div class="card"><h2>Your Instagram reels, as spots</h2>' +
-      '<p class="muted">For verified SpotoGo creators. Upload your Instagram download and SpotoGo finds the places in your posts. You check each one in the app before anything goes on your profile.</p></div>' +
-      '<div class="card login"><label>The email of your SpotoGo account<input id="email" type="email" autocomplete="email" placeholder="you@gmail.com" /></label>' +
-      '<p class="muted">If you sign in to SpotoGo with Google, use that Google email.</p>' +
+      '<p class="muted">For verified SpotoGo creators. Upload your Instagram download and SpotoGo finds the places in your posts. You check each one in the app before anything goes on your profile.</p>' +
+      '<p><b>Easiest on your phone:</b> in the SpotoGo app, open Account → Import my reels → Import from Instagram. No sign-in needed. This page is for a download saved on a computer.</p></div>' +
+      '<div class="card login"><label>The email you sign in to the SpotoGo app with<input id="email" type="email" autocomplete="email" placeholder="you@gmail.com" /></label>' +
+      '<p class="muted">Not your Instagram email (that doesn’t matter here). If you sign in to SpotoGo with Google or Zoho, use that account’s email.</p>' +
       '<button id="send" class="btn primary">Send me a code</button>' +
       '<label id="codeLabel" hidden>6-digit code from the email<input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" /></label>' +
       '<button id="verify" class="btn primary" hidden>Sign in</button>' +
@@ -106,7 +107,7 @@
     $('send').onclick = function () {
       var email = $('email').value.trim(); if (!email) return;
       $('send').disabled = true; $('loginErr').textContent = '';
-      api('/auth/email/start', { body: { email: email } }).then(function () {
+      api('/auth/email/start', { body: { email: email, existing: true } }).then(function () {
         $('codeLabel').hidden = false; $('verify').hidden = false; $('code').focus(); $('send').textContent = 'Send again';
       }).catch(function (e) { $('loginErr').textContent = e.message; }).finally(function () { $('send').disabled = false; });
     };
@@ -114,7 +115,7 @@
     $('code').onkeydown = function (e) { if (e.key === 'Enter') $('verify').click(); };
     $('verify').onclick = function () {
       $('verify').disabled = true; $('loginErr').textContent = '';
-      api('/auth/email/verify', { body: { email: $('email').value.trim(), code: $('code').value.trim() } }).then(function (r) {
+      api('/auth/email/verify', { body: { email: $('email').value.trim(), code: $('code').value.trim(), existing: true } }).then(function (r) {
         session = r.session; try { localStorage.setItem(KEY, session); } catch (e) {}
         start();
       }).catch(function (e) { $('loginErr').textContent = e.message; }).finally(function () { $('verify').disabled = false; });
@@ -126,7 +127,7 @@
     if (!session) return showLogin();
     api('/me/imports').then(function (r) {
       sources = r.sources;
-      if (!sources.verified) return logout('Importing reels is for verified creators. Ask for verification in the SpotoGo app (Account → Get verified), then come back.');
+      if (!sources.verified) return logout('Importing reels is for verified creators. Ask for verification in the SpotoGo app (Account → Verification), then come back.');
       $('logout').hidden = false;
       showUpload(r.imports);
     }).catch(function (e) {

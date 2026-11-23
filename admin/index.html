@@ -176,13 +176,13 @@
   $('send').onclick = function () {
     var email = $('email').value.trim(); if (!email) return;
     $('send').disabled = true; $('loginErr').textContent = '';
-    api('/auth/email/start', { email: email }).then(function () {
+    api('/auth/email/start', { email: email, existing: true }).then(function () {
       $('code').hidden = false; $('verify').hidden = false; $('code').focus(); $('send').textContent = 'Send again';
     }).catch(function (e) { $('loginErr').textContent = e.message; }).finally(function () { $('send').disabled = false; });
   };
   $('verify').onclick = function () {
     $('verify').disabled = true; $('loginErr').textContent = '';
-    api('/auth/email/verify', { email: $('email').value.trim(), code: $('code').value.trim() }).then(function (r) {
+    api('/auth/email/verify', { email: $('email').value.trim(), code: $('code').value.trim(), existing: true }).then(function (r) {
       session = r.session; try { localStorage.setItem(KEY, session); } catch (e) {}
       start();
     }).catch(function (e) { $('loginErr').textContent = e.message; }).finally(function () { $('verify').disabled = false; });
