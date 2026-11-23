@@ -313,6 +313,7 @@
     h += '<p class="muted">Ola billing and credits: Krutrim Cloud console → Usage. Cloudflare: dashboard → Workers &amp; Pages.</p></div>';
 
     h += '<div class="card" id="scores"><h2>SpotoGo Score</h2><p class="muted">Loading…</p></div>';
+    h += '<div class="card" id="leaving"><h2>Why people left</h2><p class="muted">Loading…</p></div>';
     h += '<div class="card"><h2>Find someone</h2><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
     h += '</div></div>';
     h += '<p class="muted" style="margin-top:12px">Updated ' + ago(d.at) + '</p>';
@@ -320,7 +321,29 @@
     $('q').oninput = searchSoon;
     loadAccess();
     loadScores(scoreCity);
+    loadLeaving();
     balance();
+  }
+
+  // Why people deleted their account (the app asks before deleting; backend/src/leaving.ts).
+  function loadLeaving() {
+    api('/admin/api/leaving').then(function (d) {
+      var box = $('leaving');
+      if (!box) return;
+      var h = '<h2>Why people left</h2>';
+      if (!d.total) { box.innerHTML = h + '<p class="muted">Nobody has deleted their account yet.</p>'; return balance(); }
+      h += '<p class="muted">' + n(d.total) + ' asked to delete · ' + n(d.cameBack) + ' came back within 30 days</p>';
+      h += '<div class="tiles">' + d.byReason.map(function (r) { return stat(r.label, n(r.n), r.back ? n(r.back) + ' came back' : null, true); }).join('') + '</div>';
+      h += d.recent.slice(0, 30).map(function (r) {
+        var who = r.username ? '@' + esc(r.username) : (r.purgedAt ? 'deleted' : 'no username');
+        var state = r.cancelledAt ? '<span class="ok">came back</span>' : r.purgedAt ? 'gone' : 'deleting';
+        return '<div class="item"><div class="grow"><b>' + esc(r.label) + '</b> · ' + who + ' · ' + state +
+          (r.note ? '<div>“' + esc(r.note) + '”</div>' : '') +
+          '<div class="muted">' + n(r.spots) + ' spots · ' + n(r.lists) + ' lists · ' + n(r.followers) + ' followers · ' + n(r.daysOn) + ' days on SpotoGo · ' + ago(r.askedAt) + '</div></div></div>';
+      }).join('');
+      box.innerHTML = h;
+      balance();
+    }).catch(function (e) { if ($('leaving')) $('leaving').innerHTML = '<h2>Why people left</h2><p class="err">' + esc(e.message) + '</p>'; });
   }
 
   // Two even columns (user, 2026-11-20: "the dashboard is lopsided"): the cards keep their order and
