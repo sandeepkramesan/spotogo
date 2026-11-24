@@ -40,9 +40,15 @@
   @media (min-width: 900px) { .kpis { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
   @media (max-width: 420px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 640px) { #who { display: none; } .bar h1 { font-size: 14px; } }
-  .cols { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); margin-top: 12px; align-items: start; }
-  @media (min-width: 960px) { .cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
-  .stack { display: grid; gap: 12px; min-width: 0; }
+  /* One section per row (user, 2026-11-24): the two column wrappers just pass their cards through. */
+  .cols { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); margin-top: 12px; }
+  .stack { display: contents; }
+  /* Tap a section's heading to fold it to just the heading (kept in this browser). */
+  #app .card > h2:first-child { cursor: pointer; user-select: none; }
+  #app .card > h2:first-child::after { content: '▾'; margin-left: auto; color: var(--faint); font-size: 13px; }
+  #app .card.folded > h2:first-child { margin-bottom: 0; }
+  #app .card.folded > h2:first-child::after { content: '▸'; }
+  #app .card.folded > *:not(:first-child) { display: none; }
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; min-width: 0; }
   .card > h2:first-child { margin-top: 0; }
   .tiles { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -284,8 +290,6 @@
     h += '</div>';
     h += '<div class="card" id="signups"><h2>Sign-ups</h2><p class="muted">Loading…</p></div>';
     h += '<div class="card" id="leaving"><h2>Why people left</h2><p class="muted">Loading…</p></div>';
-    h += '<div class="card" id="foodies"><h2>Lives to eat</h2><p class="muted">Loading…</p></div>';
-    h += '<div class="card"><h2>Find someone</h2><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
     h += '</div><div class="stack" id="colB">';
     h += '<div class="card" id="reports"><h2>Reports</h2><p class="muted">Loading…</p></div>';
 
@@ -321,6 +325,7 @@
     h += '<p class="muted">Ola billing and credits: Krutrim Cloud console → Usage. Cloudflare: dashboard → Workers &amp; Pages.</p></div>';
 
     h += '<div class="card" id="scores"><h2>SpotoGo Score</h2><p class="muted">Loading…</p></div>';
+    h += '<div class="card"><h2>Find someone</h2><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
     h += '</div></div>';
     h += '<p class="muted" style="margin-top:12px">Updated ' + ago(d.at) + '</p>';
     $('app').innerHTML = h;
@@ -328,8 +333,8 @@
     loadAccess();
     loadScores(scoreCity);
     loadLeaving();
-    loadFoodies();
     loadReport();
+    applyFolds();
   }
 
   // ---------- Reports (user, 2026-11-23): any day, week, month or year, as CSV or a printable page ----------
@@ -392,20 +397,6 @@
     }
   });
 
-  // ---------- People who ticked "I live to eat" on the profile screen ----------
-  function loadFoodies() {
-    api('/admin/api/foodies').then(function (d) {
-      var box = $('foodies');
-      if (!box) return;
-      var h = '<h2>Lives to eat <span class="muted">' + n(d.foodies.length) + ' of ' + n(d.of) + ' profiles</span></h2>' +
-        '<p class="muted">Ticked “I agree that I live to eat and not the other way around.” when they joined.</p>';
-      h += d.foodies.slice(0, 40).map(function (f) {
-        return '<div class="item"><b>@' + esc(f.username || '—') + (f.verified ? ' ✓' : '') + '</b><span class="muted">' + (f.name ? esc(f.name) + ' · ' : '') + n(f.spots) + ' spots · ' + ago(f.at) + '</span></div>';
-      }).join('') || '<p class="muted">Nobody yet.</p>';
-      if (d.foodies.length > 40) h += '<p class="muted">and ' + n(d.foodies.length - 40) + ' more (search them in Find someone).</p>';
-      box.innerHTML = h;
-    }).catch(function (e) { if ($('foodies')) $('foodies').innerHTML = '<h2>Lives to eat</h2><p class="err">' + esc(e.message) + '</p>'; });
-  }
 
   // Why people deleted their account (the app asks before deleting; backend/src/leaving.ts).
   function loadLeaving() {
@@ -431,6 +422,25 @@
   // Fixed columns (user, 2026-11-23: "the sections shouldn't move around"): every card has its place in
   // the HTML (left: things to act on and people; right: numbers). Below 960 px the columns stack.
   function balance() {}
+
+  var FOLD_KEY = 'spotogo.admin.folded.v1';
+  function cardKey(card) {
+    var h = card.querySelector('h2');
+    return card.id || (h && h.firstChild ? String(h.firstChild.textContent || '').trim() : '');
+  }
+  function foldedKeys() { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '[]'); } catch (e) { return []; } }
+  function applyFolds() {
+    var keys = foldedKeys();
+    document.querySelectorAll('#app .card').forEach(function (c) { c.classList.toggle('folded', keys.indexOf(cardKey(c)) >= 0); });
+  }
+  document.addEventListener('click', function (e) {
+    var h = e.target.closest && e.target.closest('#app .card > h2:first-child');
+    if (!h || e.target.closest('button, a, input, select')) return;
+    var card = h.parentElement, key = cardKey(card), keys = foldedKeys(), i = keys.indexOf(key);
+    if (i >= 0) keys.splice(i, 1); else keys.push(key);
+    try { localStorage.setItem(FOLD_KEY, JSON.stringify(keys)); } catch (err) {}
+    card.classList.toggle('folded', i < 0);
+  });
 
   // SpotoGo Score (2026-11-20): private to the founder. Best places per city (unclaimed ones are
   // restaurant leads) and creators whose reels most often send people to a place.
@@ -588,7 +598,7 @@
               '<button class="btn danger" data-act="social-remove" data-id="' + esc(s.id) + '" data-name="' + esc(s.handle) + '">Remove</button></div>';
           }).join('');
           if (!social && u.verified) social = '<p class="muted sub">No Instagram or YouTube on the profile.</p>';
-          return '<div class="person"><div class="item"><div class="main"><b>@' + esc(u.username || '—') + (u.kind === 'restaurant' ? ' · restaurant' : '') + '</b>' + (u.foodie ? '<span class="tag">Lives to eat</span>' : '') + '<span class="muted">' + esc(u.email) + ' · ' + n(u.spots) + ' spots · ' + (u.last_active ? 'active ' + esc(u.last_active) : 'not active yet') + '</span>' + status + '</div>' +
+          return '<div class="person"><div class="item"><div class="main"><b>@' + esc(u.username || '—') + (u.kind === 'restaurant' ? ' · restaurant' : '') + '</b>' + '<span class="muted">' + esc(u.email) + ' · ' + n(u.spots) + ' spots · ' + (u.last_active ? 'active ' + esc(u.last_active) : 'not active yet') + '</span>' + status + '</div>' +
             '<button class="btn ' + (u.verified ? 'danger' : 'primary') + '" data-act="' + (u.verified ? 'unverify' : 'verify') + '" data-id="' + esc(u.id) + '" data-name="' + esc(u.username) + '">' + (u.verified ? 'Unverify' : 'Verify') + '</button></div>' + social + '</div>';
         }).join('') || '<p class="muted">Nobody matches.</p>';
       }).catch(function (e) { $('people').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; });
