@@ -162,11 +162,14 @@
 
   // needWhy: turning someone down; the reason is required and goes to them by email.
   // Resolves to false (cancelled) or the reason ('' when none is asked).
-  function ask(text, yes, danger, needWhy) {
+  var WHY_HINT = null;
+  function ask(text, yes, danger, needWhy, hint) {
     return new Promise(function (resolve) {
       $('cText').textContent = text; $('cYes').textContent = yes;
       $('cYes').className = 'btn ' + (danger ? 'danger' : 'primary');
       var why = $('cWhy'); why.hidden = !needWhy; why.value = '';
+      if (WHY_HINT === null) WHY_HINT = why.placeholder;
+      why.placeholder = hint || WHY_HINT;
       var d = $('confirm');
       $('cYes').onclick = function () {
         var r = why.value.trim();
@@ -591,6 +594,9 @@
       api('/admin/api/users?q=' + encodeURIComponent(q)).then(function (r) {
         $('people').innerHTML = r.users.map(function (u) {
           var status = u.verified ? '<span class="ok">Verified</span>' : u.requested ? '<span class="warn">Asked to be verified ' + ago(u.requested) + '</span>' : '<span class="muted">Not verified</span>';
+          if (u.blocked_at) status += '<span class="err"><b>Blocked ' + ago(u.blocked_at) + '</b>' + (u.blocked_reason ? ' · ' + esc(u.blocked_reason) : '') + '</span>';
+          var who = u.username ? '@' + esc(u.username) : esc(u.email);
+          var blockBtn = '<button class="btn ' + (u.blocked_at ? '' : 'danger') + '" data-act="' + (u.blocked_at ? 'unblock' : 'block') + '" data-id="' + esc(u.id) + '" data-name="' + who + '">' + (u.blocked_at ? 'Unblock' : 'Block') + '</button>';
           var social = (u.social || []).map(function (s) {
             return '<div class="item sub"><div class="main"><span>' + (s.platform === 'instagram' ? 'Instagram' : 'YouTube') + ' @' + esc(s.handle) +
               (s.followers != null ? ' · ' + n(s.followers) + (s.platform === 'youtube' ? ' subscribers' : ' followers') : '') + '</span><span class="muted">' +
@@ -599,7 +605,7 @@
           }).join('');
           if (!social && u.verified) social = '<p class="muted sub">No Instagram or YouTube on the profile.</p>';
           return '<div class="person"><div class="item"><div class="main"><b>@' + esc(u.username || '—') + (u.kind === 'restaurant' ? ' · restaurant' : '') + '</b>' + '<span class="muted">' + esc(u.email) + ' · ' + n(u.spots) + ' spots · ' + (u.last_active ? 'active ' + esc(u.last_active) : 'not active yet') + '</span>' + status + '</div>' +
-            '<button class="btn ' + (u.verified ? 'danger' : 'primary') + '" data-act="' + (u.verified ? 'unverify' : 'verify') + '" data-id="' + esc(u.id) + '" data-name="' + esc(u.username) + '">' + (u.verified ? 'Unverify' : 'Verify') + '</button></div>' + social + '</div>';
+            '<button class="btn ' + (u.verified ? 'danger' : 'primary') + '" data-act="' + (u.verified ? 'unverify' : 'verify') + '" data-id="' + esc(u.id) + '" data-name="' + esc(u.username) + '">' + (u.verified ? 'Unverify' : 'Verify') + '</button>' + blockBtn + '</div>' + social + '</div>';
         }).join('') || '<p class="muted">Nobody matches.</p>';
       }).catch(function (e) { $('people').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; });
     }, 350);
@@ -624,6 +630,8 @@
     'social-remove': ['Remove @% from that profile?', 'Remove', true, function (id, why) { return api('/admin/api/social/' + id + '/remove', { reason: why }); }, true],
     'verify': ['Verify @%? They get the pin badge and a Private list.', 'Verify', false, function (id) { return api('/admin/api/users/' + id + '/verify', { verified: true }); }],
     'unverify': ['Unverify @%? They lose the badge, and their Instagram/YouTube stops showing. Private spots stay private.', 'Unverify', true, function (id, why) { return api('/admin/api/users/' + id + '/verify', { verified: false, reason: why }); }, true],
+    'block': ['Block %? They’re logged out on every phone, can’t log in again, and their profile, spots and lists stop showing to anyone.', 'Block', true, function (id, why) { return api('/admin/api/users/' + id + '/block', { blocked: true, reason: why }); }, true, 'Why? This goes to them by email (for example: posting spam spots).'],
+    'unblock': ['Unblock %? They can log in again, and their profile, spots and lists show as before. We email them.', 'Unblock', false, function (id) { return api('/admin/api/users/' + id + '/block', { blocked: false }); }],
   };
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-act]');
@@ -644,7 +652,7 @@
         .then(load).catch(function (err) { alert(err.message); b.disabled = false; });
       return;
     }
-    ask(a[0].replace('%', b.getAttribute('data-name') || ''), a[1], a[2], !!a[4]).then(function (why) {
+    ask(a[0].replace('%', b.getAttribute('data-name') || ''), a[1], a[2], !!a[4], a[5]).then(function (why) {
       if (why === false) return;
       b.disabled = true;
       a[3](b.getAttribute('data-id'), why).then(load).catch(function (err) { alert(err.message); b.disabled = false; });
