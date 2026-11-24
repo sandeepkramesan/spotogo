@@ -328,6 +328,7 @@
     h += '<p class="muted">Ola billing and credits: Krutrim Cloud console → Usage. Cloudflare: dashboard → Workers &amp; Pages.</p></div>';
 
     h += '<div class="card" id="scores"><h2>SpotoGo Score</h2><p class="muted">Loading…</p></div>';
+    h += '<div class="card" id="dups"><h2>Duplicate places</h2><p class="muted">Loading…</p></div>';
     h += '<div class="card"><h2>Find someone</h2><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
     h += '</div></div>';
     h += '<p class="muted" style="margin-top:12px">Updated ' + ago(d.at) + '</p>';
@@ -336,6 +337,7 @@
     loadAccess();
     loadScores(scoreCity);
     loadLeaving();
+    loadDups();
     loadReport();
     applyFolds();
   }
@@ -402,6 +404,26 @@
 
 
   // Why people deleted their account (the app asks before deleting; backend/src/leaving.ts).
+  // One page per restaurant (2026-11-24): pages that may be one restaurant saved twice.
+  function loadDups() {
+    api('/admin/api/places/duplicates').then(function (d) {
+      var box = $('dups');
+      if (!box) return;
+      var h = '<h2>Duplicate places</h2>';
+      if (!d.pairs.length) { box.innerHTML = h + '<p class="muted">No restaurant looks like it has two pages.</p>'; return; }
+      h += '<p class="muted">Restaurant pages close together with a word in common. Merge them into the one that stays (spots, timings and the other name move over), or say they’re different.</p>';
+      h += d.pairs.map(function (p) {
+        var side = function (x) { return '<b>' + esc(x.name) + '</b>' + (x.official ? ' <span class="ok">official</span>' : '') + ' <span class="muted">· ' + n(x.savers) + ' saved · ' + esc(x.address || '') + '</span>'; };
+        var maps = 'https://www.google.com/maps/search/?api=1&query=' + p.a.lat + ',' + p.a.lng;
+        return '<div class="item"><div class="grow"><div>' + side(p.a) + '</div><div>' + side(p.b) + '</div><div class="muted">' + n(p.metres) + ' m apart · <a href="' + maps + '" target="_blank" rel="noopener">Map</a></div></div>' +
+          '<button class="btn primary" data-act="place-merge" data-id="' + esc(p.b.id + '|' + p.a.id) + '" data-name="' + esc(p.b.name + '” into “' + p.a.name) + '">Keep first</button>' +
+          '<button class="btn primary" data-act="place-merge" data-id="' + esc(p.a.id + '|' + p.b.id) + '" data-name="' + esc(p.a.name + '” into “' + p.b.name) + '">Keep second</button>' +
+          '<button class="btn" data-act="place-notsame" data-id="' + esc(p.a.id + '|' + p.b.id) + '" data-name="' + esc(p.a.name + '” and “' + p.b.name) + '">Different</button></div>';
+      }).join('');
+      box.innerHTML = h;
+    }).catch(function (e) { if ($('dups')) $('dups').innerHTML = '<h2>Duplicate places</h2><p class="err">' + esc(e.message) + '</p>'; });
+  }
+
   function loadLeaving() {
     api('/admin/api/leaving').then(function (d) {
       var box = $('leaving');
@@ -630,6 +652,8 @@
     'social-remove': ['Remove @% from that profile?', 'Remove', true, function (id, why) { return api('/admin/api/social/' + id + '/remove', { reason: why }); }, true],
     'verify': ['Verify @%? They get the pin badge and a Private list.', 'Verify', false, function (id) { return api('/admin/api/users/' + id + '/verify', { verified: true }); }],
     'unverify': ['Unverify @%? They lose the badge, and their Instagram/YouTube stops showing. Private spots stay private.', 'Unverify', true, function (id, why) { return api('/admin/api/users/' + id + '/verify', { verified: false, reason: why }); }, true],
+    'place-merge': ['Merge “%”? Its spots, timings and name move over; this can’t be undone here.', 'Merge', false, function (id) { var x = id.split('|'); return api('/admin/api/places/merge', { from: x[0], into: x[1] }); }],
+    'place-notsame': ['“%” are different restaurants? They stop showing as a pair.', 'Different', false, function (id) { var x = id.split('|'); return api('/admin/api/places/not-same', { a: x[0], b: x[1] }); }],
     'block': ['Block %? They’re logged out on every phone, can’t log in again, and their profile, spots and lists stop showing to anyone.', 'Block', true, function (id, why) { return api('/admin/api/users/' + id + '/block', { blocked: true, reason: why }); }, true, 'Why? This goes to them by email (for example: posting spam spots).'],
     'unblock': ['Unblock %? They can log in again, and their profile, spots and lists show as before. We email them.', 'Unblock', false, function (id) { return api('/admin/api/users/' + id + '/block', { blocked: false }); }],
   };
