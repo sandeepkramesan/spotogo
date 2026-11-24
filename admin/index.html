@@ -262,7 +262,7 @@
         btn('cr-dismiss', r.id, r.target_username, 'Dismiss') + (r.target_type !== 'user' ? btn('cr-hide', r.id, r.target_username, 'Hide') : '') + btn('cr-suspend', r.id, r.target_username, 'Suspend', 'danger'));
     });
     notesFor = {};
-    var KIND = { closed: 'closed for good', temp: 'closed for now', hours: 'hours wrong', open: 'open again', renamed: 'new name' };
+    var KIND = { closed: 'closed for good', temp: 'closed for now', hours: 'hours wrong', open: 'open again', renamed: 'new name', delivery: 'delivery only' };
     reports.forEach(function (g) {
       var counts = Object.keys(KIND).filter(function (k) { return g.kinds[k]; }).map(function (k) { return KIND[k] + ' ×' + g.kinds[k]; }).join(' · ');
       var ids = g.ids.join(',');
@@ -272,6 +272,7 @@
         (g.claimed && (g.kinds.renamed || g.kinds.hours) ? '<span class="muted" style="flex-basis:100%">Claimed: its owner sees these suggestions and sets the name and hours.</span>' : '') +
         (g.kinds.renamed && !g.claimed ? btn('place-rename', ids, g.name, 'Use new name') : '') + (g.kinds.hours && !g.claimed ? btn('place-hours', ids, g.name, 'Set hours') : '') +
         (g.kinds.closed || g.kinds.temp || g.kinds.open ? btn('place-closed', ids, g.name, 'Closed for good', 'danger') + btn('place-temp', ids, g.name, 'Closed for now') + btn('place-open', ids, g.name, 'Open') : '') +
+        (g.kinds.delivery ? btn('place-delivery', ids, g.name, 'Delivery only') + btn('place-dinein', ids, g.name, 'Has seating') : '') +
         btn('place-dismiss', ids, g.name, 'Dismiss'));
       notesFor[ids] = g.notes;
     });
@@ -642,6 +643,8 @@
     'place-closed': ['Mark % as closed for good? Everyone who saved it gets a phone alert and sees a grey pin.', 'Closed for good', true, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'closed' }); }],
     'place-temp': ['Mark % as closed for now? Everyone who saved it gets a phone alert.', 'Closed for now', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'temp' }); }],
     'place-open': ['Mark % as open? Any closure shown for it is cleared.', 'Open', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'open' }); }],
+    'place-delivery': ['Mark % as delivery only? Everyone who saved it sees “Delivery only: nowhere to sit”.', 'Delivery only', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'delivery' }); }],
+    'place-dinein': ['% has seating? No delivery-only warning shows for it, even from hints.', 'Has seating', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'dinein' }); }],
     'place-dismiss': ['Dismiss the reports for %? Nothing changes on the map.', 'Dismiss', false, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'dismiss' }); }],
     'name-yes': ['Approve this for %? It changes what diners see.', 'Approve', false, function (id) { return api('/admin/api/names/' + encodeURIComponent(id), { approve: true }); }],
     'name-no': ['Reject this request for %? Tell them why.', 'Reject', true, function (id, why) { return api('/admin/api/names/' + encodeURIComponent(id), { approve: false, reason: why }); }, true],

@@ -385,6 +385,9 @@
         '<label>WhatsApp<input id="whatsapp" maxlength="24" value="' + esc(d.whatsapp || '') + '" /></label>' +
         '<label>Instagram<input id="instagram" maxlength="40" placeholder="yourrestaurant" value="' + esc(d.instagram || '') + '" /></label>' +
         '<label>Price<select id="price"><option value="">Not set</option>' + [1, 2, 3, 4].map(function (p) { return '<option value="' + p + '"' + (d.price === p ? ' selected' : '') + '>' + '₹'.repeat(p) + '</option>'; }).join('') + '</select></label>' +
+        // How people get the food (2026-11-25): "Delivery only" warns diners there's nowhere to sit.
+        '<label>How people get your food<select id="service"><option value="">Not set</option>' +
+        [['dinein', 'Dine-in'], ['takeaway', 'Takeaway only'], ['delivery', 'Delivery only (no seating)']].map(function (o) { return '<option value="' + o[0] + '"' + (d.service === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>' +
         '<label>Website (https://)<input id="website" maxlength="300" value="' + esc(d.website || '') + '" /></label>' +
         '<label>Booking link (https://)<input id="reserveUrl" maxlength="300" value="' + esc(d.reserveUrl || '') + '" /></label>' +
         '<label class="wide">Cuisines (up to 6, separated by commas)<input id="cuisines" maxlength="160" placeholder="Malvani, Seafood" value="' + esc((d.cuisines || []).join(', ')) + '" /></label></div>' +
@@ -444,6 +447,7 @@
           website: url($('website').value), reserveUrl: url($('reserveUrl').value), price: Number($('price').value) || undefined,
           cuisines: $('cuisines').value.split(',').map(function (x) { return x.trim(); }).filter(Boolean),
           signatures: sigs, closed: state || undefined, closedUntil: until,
+          service: $('service').value || undefined,
         };
         var before = d.closed || '';
         if (state && state !== before && !confirm(state === 'closed' ? 'Mark ' + r.name + ' closed for good? Everyone who saved you gets a phone alert.' : 'Mark ' + r.name + ' closed for now? Everyone who saved you gets a phone alert.')) return;
