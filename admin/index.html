@@ -101,6 +101,22 @@
   a { color: var(--hi); }
   dialog { border: 1px solid var(--border); border-radius: 14px; background: var(--card); color: var(--text); max-width: 420px; }
   dialog::backdrop { background: rgba(0,0,0,.35); }
+  /* Tappable numbers open the people behind them (2026-11-25). */
+  .stat.link { cursor: pointer; }
+  .stat.link:hover { border-color: var(--accent); }
+  .stat.link .l::after { content: ' ›'; color: var(--faint); }
+  #peopleDlg { max-width: 640px; width: calc(100% - 24px); padding: 0; }
+  #peopleDlg .ph { display: flex; align-items: center; gap: 10px; padding: 14px 16px 8px; }
+  #peopleDlg .ph h3 { margin: 0; font-size: 18px; }
+  #peopleDlg .ph .muted { margin-left: 4px; }
+  #peopleDlg .ph button { margin-left: auto; }
+  #peopleDlg .ptabs { display: flex; gap: 6px; padding: 0 16px 10px; }
+  #peopleDlg .ptabs .btn.on { background: var(--accent); border-color: var(--accent); color: #10291F; }
+  #peopleDlg .plist { max-height: 70vh; overflow: auto; padding: 0 16px 16px; display: grid; gap: 8px; }
+  #peopleDlg .prow { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  #peopleDlg .prow .badge { display: inline-block; border: 1px solid var(--border); border-radius: 99px; padding: 0 7px; font-size: 11px; margin-left: 6px; color: var(--muted); }
+  #peopleDlg .prow .badge.bad { border-color: var(--bad); color: var(--bad); }
+  #peopleDlg .prow .badge.warn { border-color: var(--warn); color: var(--warn); }
   .person { border-top: 1px solid var(--border); padding-top: 4px; margin-top: 4px; }
   .person:first-child { border: 0; }
   .sub { padding-left: 12px; }
@@ -129,6 +145,8 @@
 </section>
 
 <main id="app" hidden></main>
+<dialog id="peopleDlg"><div class="ph"><h3 id="pTitle"></h3><span class="muted" id="pCount"></span><button class="btn" id="pClose">Close</button></div>
+  <div class="ptabs" id="pTabs"></div><div class="plist" id="pList"></div></dialog>
 <dialog id="confirm"><p id="cText"></p>
   <textarea id="cWhy" rows="4" maxlength="600" placeholder="Why? This goes to them by email, with an apology and how to get it." style="width:100%;box-sizing:border-box;font:inherit;padding:10px;border:1px solid var(--border);border-radius:10px;margin:0 0 12px;background:var(--bg);color:var(--text)"></textarea>
   <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -215,9 +233,66 @@
     });
   }
 
-  function stat(label, value, sub, plain) {
-    return '<div class="stat"><div class="v' + (plain ? ' plain' : '') + '">' + esc(value) + '</div><div class="l">' + esc(label) + '</div>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>';
+  function stat(label, value, sub, plain, people) {
+    return '<div class="stat' + (people ? ' link' : '') + '"' + (people ? ' data-people="' + people + '" role="button" tabindex="0" title="See who"' : '') + '><div class="v' + (plain ? ' plain' : '') + '">' + esc(value) + '</div><div class="l">' + esc(label) + '</div>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>';
   }
+
+  // The people behind a number (Accounts, active today / 7 / 30 days, new, verified).
+  var PEOPLE = {
+    accounts: { title: 'Accounts', tabs: [['All', 'all'], ['Diners', 'diners'], ['Restaurants', 'restaurants']] },
+    dau: { title: 'Active today', tabs: [['Today', 'active_today']] },
+    wau: { title: 'Active in 7 days', tabs: [['7 days', 'active_7d']] },
+    mau: { title: 'Active in 30 days', tabs: [['30 days', 'active_30d']] },
+    new: { title: 'New accounts', tabs: [['Today', 'new_today'], ['7 days', 'new_7d'], ['30 days', 'new_30d']] },
+    verified: { title: 'Verified', tabs: [['Verified', 'verified']] },
+  };
+  function lastSeen(day) {
+    if (!day) return 'never';
+    var ist = function (t) { return new Date(t + 5.5 * 3600000).toISOString().slice(0, 10); };
+    if (day === ist(Date.now())) return 'today';
+    if (day === ist(Date.now() - 86400000)) return 'yesterday';
+    return new Date(day + 'T12:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  }
+  function openPeople(key, tab) {
+    var v = PEOPLE[key]; if (!v) return;
+    tab = tab || 0;
+    $('pTitle').textContent = v.title;
+    $('pCount').textContent = '';
+    $('pTabs').innerHTML = v.tabs.length > 1 ? v.tabs.map(function (t, i) {
+      return '<button class="btn' + (i === tab ? ' on' : '') + '" data-ptab="' + key + '|' + i + '">' + esc(t[0]) + '</button>';
+    }).join('') : '';
+    $('pList').innerHTML = '<div class="muted">Loading…</div>';
+    if (!$('peopleDlg').open) $('peopleDlg').showModal();
+    var show = v.tabs[tab][1];
+    api('/admin/api/people?show=' + show).then(function (r) {
+      var list = r.people || [];
+      var total = r.total || list.length;
+      $('pCount').textContent = total > list.length ? 'newest ' + n(list.length) + ' of ' + n(total) : n(total) + (total === 1 ? ' account' : ' accounts');
+      $('pList').innerHTML = list.length ? list.map(function (p) {
+        var who = p.username ? '@' + esc(p.username) : p.kind === 'restaurant' ? esc(p.restaurant || (p.claiming ? 'Claiming ' + p.claiming : 'No restaurant claimed yet')) : esc(p.name || 'No profile yet');
+        var badges = '<span class="badge">' + (p.kind === 'restaurant' ? 'Restaurant' : 'Diner') + '</span>' +
+          (p.verified ? '<span class="badge">Verified</span>' : '') +
+          (p.blocked_at ? '<span class="badge bad">Blocked</span>' : '') +
+          (p.leaving_at ? '<span class="badge warn">Leaving</span>' : '');
+        var meta = 'Joined ' + new Date(p.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) +
+          ' · last in ' + lastSeen(p.last_active) + ' · ' + p.days_30 + ' of 30 days' +
+          (p.kind === 'diner' ? ' · ' + n(p.spots) + (p.spots === 1 ? ' spot' : ' spots') + ' · ' + n(p.followers) + (p.followers === 1 ? ' follower' : ' followers') : '') +
+          (p.city ? ' · ' + esc(p.city) : '');
+        return '<div class="prow"><b>' + who + '</b>' + badges + '<div class="muted">' + esc([p.username && p.name ? p.name : '', p.email].filter(Boolean).join(' · ')) + '</div><div class="muted" style="font-size:12px">' + meta + '</div></div>';
+      }).join('') : '<div class="muted">No one here yet.</div>';
+    }).catch(function (e) { $('pList').innerHTML = '<div class="muted">' + esc(e.message) + '</div>'; });
+  }
+  document.addEventListener('click', function (e) {
+    var s = e.target.closest && e.target.closest('[data-people]');
+    if (s) return openPeople(s.getAttribute('data-people'));
+    var t = e.target.closest && e.target.closest('[data-ptab]');
+    if (t) { var kv = t.getAttribute('data-ptab').split('|'); return openPeople(kv[0], Number(kv[1])); }
+    if (e.target.id === 'pClose') $('peopleDlg').close();
+  });
+  document.addEventListener('keydown', function (e) {
+    var s = e.key === 'Enter' && e.target.closest && e.target.closest('[data-people]');
+    if (s) openPeople(s.getAttribute('data-people'));
+  });
   function meter(label, used, limit) {
     var pct = Math.min(100, used / limit * 100), c = pct >= 90 ? 'var(--bad)' : pct >= 70 ? 'var(--warn)' : 'var(--accent)';
     return '<div class="lim"><div style="display:flex"><b style="flex:1">' + esc(label) + '</b><b style="color:' + c + '">' + (pct < 1 && used > 0 ? '&lt;1' : Math.round(pct)) + '%</b></div>' +
@@ -235,9 +310,9 @@
   function render(d) {
     var u = d.users, h = '';
     d.alerts.forEach(function (a) { h += '<div class="alert">⚠ ' + esc(a) + '</div>'; });
-    h += '<div class="kpis">' + stat('Active today', n(u.dau)) + stat('Active 7 days', n(u.wau)) + stat('Active 30 days', n(u.mau)) +
-      stat('Stickiness', u.stickiness + '%', 'today ÷ 30 days') + stat('Accounts', n(u.total), n(u.diners) + ' diners · ' + n(u.restaurants) + ' restaurants', true) +
-      stat('New today', '+' + n(u.newToday), n(u.new7d) + ' in 7 d · ' + n(u.new30d) + ' in 30 d', true) + stat('Verified', n(u.verified), null, true) + '</div>';
+    h += '<div class="kpis">' + stat('Active today', n(u.dau), null, false, 'dau') + stat('Active 7 days', n(u.wau), null, false, 'wau') + stat('Active 30 days', n(u.mau), null, false, 'mau') +
+      stat('Stickiness', u.stickiness + '%', 'today ÷ 30 days') + stat('Accounts', n(u.total), n(u.diners) + ' diners · ' + n(u.restaurants) + ' restaurants', true, 'accounts') +
+      stat('New today', '+' + n(u.newToday), n(u.new7d) + ' in 7 d · ' + n(u.new30d) + ' in 30 d', true, 'new') + stat('Verified', n(u.verified), null, true, 'verified') + '</div>';
 
     h += '<div class="cols"><div class="stack" id="colA">';
     var reports = d.todo.placeReports || [], creports = d.todo.contentReports || [];
