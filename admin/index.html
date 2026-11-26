@@ -406,8 +406,8 @@
     h += '<div class="card" id="scores"><h2>SpotoGo Score</h2><p class="muted">Loading…</p></div>';
     h += '<div class="card" id="dups"><h2>Duplicate places</h2><p class="muted">Loading…</p></div>';
     h += '<div class="card"><h2>Find someone</h2><input id="q" placeholder="Username, name or email" autocomplete="off" /><div id="people"></div></div>';
-    // Comments (2026-11-26): everything people wrote, reported ones first; Hide is one tap (takedown orders: 3 hours).
-    h += '<div class="card"><h2>Comments</h2><input id="cq" placeholder="Words or @username" autocomplete="off" />' +
+    // Reviews (2026-11-26): stars + words people wrote, reported ones first; Hide is one tap (takedown orders: 3 hours).
+    h += '<div class="card"><h2>Reviews</h2><input id="cq" placeholder="Words, place or @username" autocomplete="off" />' +
       '<div class="row" style="margin:8px 0"><button class="btn" data-cshow="all">All</button><button class="btn" data-cshow="hidden">Hidden / deleted</button></div><div id="comments"><p class="muted">Loading…</p></div></div>';
     h += '</div></div>';
     h += '<p class="muted" style="margin-top:12px">Updated ' + ago(d.at) + '</p>';
@@ -696,9 +696,9 @@
         var gone = c.deleted_at ? 'deleted by the writer' : c.hidden_at ? 'hidden by ' + (c.hidden_by === 'spotogo' ? 'SpotoGo' : c.hidden_by) + (c.hidden_reason ? ' (' + c.hidden_reason + ')' : '') : '';
         return '<div class="item"><div class="main"><b>@' + esc(c.author) + '</b> on @' + esc(c.owner) + '’s ' + esc(c.spot || 'spot') +
           (c.reports ? ' <span class="err">· ' + c.reports + (c.reports === 1 ? ' report' : ' reports') + '</span>' : '') +
-          '<span>' + esc(c.text) + '</span><span class="muted">' + new Date(c.created_at).toLocaleString('en-IN') + (gone ? ' · ' + esc(gone) : '') + '</span></div>' +
+          '<span>' + (c.stars ? '<b style="color:#E0A100">' + '★★★★★'.slice(0, c.stars) + '</b><span class="muted">' + '★★★★★'.slice(c.stars) + '</span> ' : '') + esc(c.text) + '</span><span class="muted">' + new Date(c.created_at).toLocaleString('en-IN') + (gone ? ' · ' + esc(gone) : '') + '</span></div>' +
           (c.deleted_at ? '' : c.hidden_at ? btn('cm-show', c.id, c.author, 'Show again') : btn('cm-hide', c.id, c.author, 'Hide', 'danger')) + '</div>';
-      }).join('') || '<p class="muted">No comments here.</p>';
+      }).join('') || '<p class="muted">No reviews here.</p>';
     }).catch(function (e) { $('comments').innerHTML = '<p class="err">' + esc(e.message) + '</p>'; });
   }
   document.addEventListener('click', function (e) {
@@ -735,8 +735,8 @@
     'req-yes': ['Verify @%? They get the pin badge and a Private list, and can show Instagram or YouTube.', 'Verify', false, function (id) { return api('/admin/api/requests/' + id, { approve: true }); }],
     'req-no': ['Reject @%’s request? They stay unverified and can ask again tomorrow.', 'Reject', true, function (id, why) { return api('/admin/api/requests/' + id, { approve: false, reason: why }); }, true],
     'cr-dismiss': ['Dismiss this report about @%? Nothing changes.', 'Dismiss', false, function (id) { return api('/admin/api/content-reports/' + encodeURIComponent(id), { action: 'dismiss' }); }],
-    'cm-hide': ['Hide this comment by @% for everyone? It’s kept 180 days, as the IT Rules ask.', 'Hide', true, function (id, why) { return api('/admin/api/comments/' + encodeURIComponent(id), { hide: true, reason: why }).then(function (r) { loadComments(); return r; }); }, true],
-    'cm-show': ['Show this comment by @% again?', 'Show', false, function (id) { return api('/admin/api/comments/' + encodeURIComponent(id), { hide: false }).then(function (r) { loadComments(); return r; }); }],
+    'cm-hide': ['Hide this review by @% for everyone? It’s kept 180 days, as the IT Rules ask.', 'Hide', true, function (id, why) { return api('/admin/api/comments/' + encodeURIComponent(id), { hide: true, reason: why }).then(function (r) { loadComments(); return r; }); }, true],
+    'cm-show': ['Show this review by @% again?', 'Show', false, function (id) { return api('/admin/api/comments/' + encodeURIComponent(id), { hide: false }).then(function (r) { loadComments(); return r; }); }],
     'cr-hide': ['Hide this item by @% from public views? The owner still has it.', 'Hide', false, function (id) { return api('/admin/api/content-reports/' + encodeURIComponent(id), { action: 'hide' }); }],
     'cr-suspend': ['Suspend @%? They’re logged out, can’t log in, and disappear from public views.', 'Suspend', true, function (id) { return api('/admin/api/content-reports/' + encodeURIComponent(id), { action: 'suspend' }); }],
     'place-closed': ['Mark % as closed for good? Everyone who saved it gets a phone alert and sees a grey pin.', 'Closed for good', true, function (id) { return api('/admin/api/place-reports', { ids: id.split(','), action: 'closed' }); }],
