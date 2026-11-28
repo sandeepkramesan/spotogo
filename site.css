@@ -1,8 +1,8 @@
 /* Shared styles for SpotoGo's static pages (privacy, terms, delete-data). */
 :root {
-  /* Mint (same as the app's light theme, 2026-11-02): warm off-white, white cards, mint brand colour. Light only. */
-  --bg: #FCFAF6; --card: #FFFFFF; --text: #202120; --muted: #5E6360; --faint: #8A908C;
-  --border: #E3DED4; --accent: #2F9E74; --mint: #48B88C; --on-mint: #10291F; --accent-soft: #E4F4EC; --dark-green: #183C30;
+  /* Wine & Olive (same as the app's light theme, 2026-11-28): warm off-white, white cards, wine brand colour. Light only. (The --mint / --dark-green names are old; they hold wine now.) */
+  --bg: #FCFAF6; --card: #FFFFFF; --text: #2A1A1E; --muted: #6E5F62; --faint: #A3969A;
+  --border: #E6D9D3; --accent: #7B1E3D; --mint: #7B1E3D; --on-mint: #FFFFFF; --accent-soft: #F9E9E4; --dark-green: #5A1630;
   color-scheme: light;
 }
 * { box-sizing: border-box; }
