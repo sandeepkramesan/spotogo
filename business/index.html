@@ -371,6 +371,14 @@
       }
       h += '<p class="row" style="margin-top:10px"><button id="postSp" class="btn primary">' + (sp.length ? 'Update' : 'Post for today') + '</button>' + (sp.length ? '<button id="downSp" class="btn">Take down</button>' : '') + '<span id="spMsg" class="ok"></span></p></div>';
 
+      // Cover photo (2026-11-28): shown on every spot card for the place, the official page and the web page.
+      h += '<div class="card"><h2>Cover photo</h2>' +
+        (r.photo ? '<img src="' + esc(API + r.photo) + '" alt="" style="display:block;width:100%;aspect-ratio:16/9;object-fit:cover;margin:8px 0" />' : '') +
+        '<p class="muted">Shown on every spot card for your place, on your official page and on your web page. Pick a bright photo of your food or your place; we crop it wide.</p>' +
+        '<p class="row" style="margin-top:10px"><label class="btn primary" for="photoFile" style="cursor:pointer">' + (r.photo ? 'Change photo' : 'Add a photo') + '</label>' +
+        '<input id="photoFile" type="file" accept="image/jpeg,image/png,image/webp" hidden />' +
+        (r.photo ? '<button id="rmPhoto" class="btn">Remove</button>' : '') + '<span id="phMsg" class="ok"></span></p><div id="phErr" class="err"></div></div>';
+
       // Right now
       h += '<div class="card"><h2>Right now</h2><div class="seg" id="state">' +
         [['', 'Open as usual'], ['temp', 'Closed for now'], ['closed', 'Closed for good']].map(function (x) { return '<button data-st="' + x[0] + '" class="' + ((d.closed || '') === x[0] ? 'on' + (x[0] === 'closed' ? ' bad' : '') : '') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
@@ -426,6 +434,39 @@
         }).catch(function (e) { $('spMsg').textContent = ''; alert(e.message); $('postSp').disabled = false; });
       };
       $('postSp').onclick = function () { var it = specialsOf(); if (!it.length) return alert('Add at least one dish.'); postSp(it); };
+
+      // Cover photo: cropped to 16:9 in the middle and shrunk to 1600 px wide here, then uploaded as a JPEG.
+      $('photoFile').onchange = function () {
+        var f = this.files && this.files[0];
+        if (!f) return;
+        $('phErr').textContent = '';
+        $('phMsg').textContent = 'Uploading…';
+        var img = new Image();
+        img.onload = function () {
+          var w = img.naturalWidth, h = img.naturalHeight;
+          var cw = w, ch = Math.round(w * 9 / 16);
+          if (ch > h) { ch = h; cw = Math.round(h * 16 / 9); }
+          var out = Math.min(1600, cw);
+          var c = document.createElement('canvas');
+          c.width = out; c.height = Math.round(out * 9 / 16);
+          c.getContext('2d').drawImage(img, (w - cw) / 2, (h - ch) / 2, cw, ch, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(img.src);
+          c.toBlob(function (blob) {
+            fetch(API + '/me/restaurants/' + encodeURIComponent(id) + '/photo?w=' + c.width + '&h=' + c.height, {
+              method: 'PUT', headers: { 'content-type': 'image/jpeg', authorization: 'Bearer ' + session }, body: blob,
+            }).then(function (res) {
+              return res.json().catch(function () { return {}; }).then(function (j) { if (!res.ok) throw new Error(j.error || ('Error ' + res.status)); return j; });
+            }).then(function () { $('phMsg').textContent = 'Photo saved.'; setTimeout(function () { manage(id); }, 900); })
+              .catch(function (e) { $('phMsg').textContent = ''; $('phErr').textContent = e.message; });
+          }, 'image/jpeg', 0.82);
+        };
+        img.onerror = function () { $('phMsg').textContent = ''; $('phErr').textContent = 'That file isn’t a photo we can read. Try a JPEG or PNG.'; };
+        img.src = URL.createObjectURL(f);
+      };
+      if ($('rmPhoto')) $('rmPhoto').onclick = function () {
+        if (!confirm('Remove the photo? Spot cards for your place go back to having no photo.')) return;
+        api('/me/restaurants/' + encodeURIComponent(id) + '/photo', { method: 'DELETE' }).then(function () { manage(id); }).catch(function (e) { $('phErr').textContent = e.message; });
+      };
       if ($('downSp')) $('downSp').onclick = function () { if (confirm('Take today’s specials down?')) postSp([]); };
 
       var state = d.closed || '';
